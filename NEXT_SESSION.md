@@ -13,6 +13,11 @@ Day 1 foundation complete and verified end to end:
 
 ## Decisions log
 
+- Multi-agent build pipeline designed for per-volume work (build → review/vuln/security →
+  test/docs/integration → human approval before push). See `.ai/AGENT_PIPELINE.md`. Not yet
+  run — will fire for real once Day 2 (Knowledge volume) has concrete tasks assigned to files.
+
+
 - No Qdrant — pgvector inside Postgres does structured + vector data in one DB.
 - No queue (Celery/etc.) — single user, synchronous processing is fine for now.
 - No auth — local, single-user app.

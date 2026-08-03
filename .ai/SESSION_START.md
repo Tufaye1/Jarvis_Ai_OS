@@ -14,6 +14,11 @@ are relevant to the task at hand.
 5. `vault/` is the user's personal Obsidian vault — never commit its contents.
 6. Keep files under ~300 lines soft limit, ~500 hard limit. Split before it's unmanageable.
 
+## Multi-agent pipeline
+
+Before starting a whole volume (feature module, not a single task), read
+`.ai/AGENT_PIPELINE.md` — build/review/security/pre-push agents run per volume, not per task.
+
 ## Architecture (single source of truth)
 
 - `apps/api` — FastAPI, Python, managed with `uv`. Talks to Postgres.
