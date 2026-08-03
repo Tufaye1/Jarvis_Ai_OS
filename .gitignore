@@ -1,0 +1,27 @@
+# Personal knowledge — never publish notes to the repo
+/vault/*
+!/vault/.gitkeep
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+apps/api/.venv/
+apps/api/__pycache__/
+**/__pycache__/
+*.pyc
+
+# Node / Next.js
+apps/web/node_modules/
+apps/web/.next/
+apps/web/out/
+node_modules/
+
+# Docker volumes / local data
+storage/
+*.log
+
+# OS
+.DS_Store
