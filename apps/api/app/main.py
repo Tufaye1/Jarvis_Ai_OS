@@ -1,10 +1,22 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.db import engine
+from app.knowledge.models import init_models
+from app.knowledge.router import router as knowledge_router
+from app.knowledge.search_router import router as knowledge_search_router
 
-app = FastAPI(title="Jarvis AI OS API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_models(engine)
+    yield
+
+
+app = FastAPI(title="Jarvis AI OS API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -12,6 +24,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(knowledge_router)
+app.include_router(knowledge_search_router)
 
 
 @app.get("/health")

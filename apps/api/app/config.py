@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://jarvis:jarvis@localhost:5432/jarvis"
     anthropic_api_key: str = ""
     api_port: int = 8000
+    vault_path: Path = REPO_ROOT / "vault"
 
 
 settings = Settings()

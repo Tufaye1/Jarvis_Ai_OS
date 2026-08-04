@@ -10,7 +10,9 @@ and does tasks on your behalf.
 
 ## Stack
 
-- `apps/api` — FastAPI backend (Python, managed with `uv`)
+- `apps/api` — FastAPI backend (Python, managed with `uv`). Exposes `/health` and the
+  Knowledge volume's `/knowledge/reindex`, `/knowledge/backfill-embeddings`, and
+  `/knowledge/search` endpoints (vault ingestion, local embeddings, semantic search).
 - `apps/web` — Next.js frontend
 - `vault/` — your Obsidian vault (gitignored — personal notes never get pushed)
 - Postgres + `pgvector` — one database for structured data and vector search (via Docker Compose)
