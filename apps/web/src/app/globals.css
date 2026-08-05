@@ -1,26 +1,114 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* ---- Font ---- */
+  --font-sans: Archivo, "Helvetica Neue", sans-serif;
+
+  /* ---- Surfaces ---- */
+  --color-canvas: #efefed;
+  --color-surface: #ffffff;
+  --color-sunken: #f7f7f4;
+  --color-muted: #f4f4f0;
+  --color-muted-2: #f2f2ee;
+  --color-neutral-tint: #f1f1ed;
+  --color-hover: #eaeae5;
+  --color-hover-2: #e6e6e2;
+  --color-hover-3: #e9e9e4;
+
+  /* ---- Ink / text ---- */
+  --color-ink: #101010;
+  --color-ink-hover: #262622;
+  --color-ink-body: #1b1b18;
+  --color-ink-avatar: #2a2a27;
+  --color-ink-strong: #3a3a36;
+  --color-ink-file-label: #46463f;
+  --color-ink-secondary: #56564f;
+  --color-ink-muted: #6b6b66;
+  --color-ink-muted-2: #7a7a74;
+  --color-ink-faint: #9a9a96;
+  --color-ink-eyebrow: #a8a8a3;
+  --color-ink-placeholder: #b4b4ae;
+  --color-ink-ghost: #a9a9a3;
+  --color-ink-os-badge: #8c8c88;
+
+  /* ---- Accent & status ---- */
+  --color-accent: #f26b21;
+  --color-accent-deep: #c0532a;
+  --color-success: #3e8f53;
+  --color-success-bg: #e4f1e4;
+  --color-warning: #e0a93f;
+  --color-dot-idle: #c4c4be;
+
+  /* ---- Borders & dividers ---- */
+  --color-border-card: #e5e5e1;
+  --color-border-shell: #e3e3df;
+  --color-border-chip: #e2e2dd;
+  --color-border-button: #deded9;
+  --color-border-tile: #e9e9e5;
+  --color-border-kbd: #e7e7e3;
+  --color-border-hover: #cfcfc9;
+  --color-divider: #f0f0ec;
+  --color-divider-2: #f2f2ee;
+  --color-checkbox: #d6d6d0;
+
+  /* ---- Pastel tints ---- */
+  --color-tint-blue: #d8e8f6;
+  --color-tint-green: #dcefd9;
+  --color-tint-yellow: #fbf0c4;
+  --color-tint-purple: #e9e0f7;
+  --color-tint-neutral: #f1f1ed;
+
+  --color-on-tint-blue: #4a5560;
+  --color-on-tint-green: #4a5a48;
+  --color-on-tint-yellow: #5a5330;
+  --color-on-tint-purple: #504563;
+
+  /* ---- Radii ---- */
+  --radius-chip: 8px;
+  --radius-nav: 9px;
+  --radius-field: 10px;
+  --radius-tile: 12px;
+  --radius-bar: 14px;
+  --radius-grid-card: 16px;
+  --radius-card: 18px;
+  --radius-panel: 20px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #efefed;
+    color: #101010;
+    font-family: Archivo, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  * {
+    box-sizing: border-box;
+  }
+
+  a {
+    color: #101010;
+    text-decoration: none;
+  }
+
+  input,
+  button {
+    font-family: inherit;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #dcdcd7;
+  border-radius: 8px;
+  border: 3px solid #efefed;
 }

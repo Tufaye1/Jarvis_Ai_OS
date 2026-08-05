@@ -13,7 +13,8 @@ from sqlalchemy import select
 
 from app.db import async_session, engine
 from app.knowledge.ingest import scan_vault
-from app.knowledge.models import Note, NoteLink, init_models
+from app.base import init_models
+from app.knowledge.models import Note, NoteLink
 
 
 async def test_scan_vault_creates_notes_and_resolves_links(vault_root, ensure_db, cleanup_notes):

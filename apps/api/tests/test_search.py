@@ -13,7 +13,8 @@ import pytest
 
 import app.knowledge.search as search_module
 from app.db import async_session, engine
-from app.knowledge.models import Note, init_models
+from app.base import init_models
+from app.knowledge.models import Note
 
 
 def _unit_vector(index: int, dim: int = 384) -> list[float]:

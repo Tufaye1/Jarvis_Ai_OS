@@ -17,7 +17,8 @@ from sqlalchemy import select
 
 import app.knowledge.embeddings as embeddings_module
 from app.db import async_session, engine
-from app.knowledge.models import Note, init_models
+from app.base import init_models
+from app.knowledge.models import Note
 
 
 def _fake_embed_text(text: str) -> list[float]:

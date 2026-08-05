@@ -4,10 +4,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
+from app.base import init_models
+from app.chat.router import router as chat_router
 from app.db import engine
-from app.knowledge.models import init_models
 from app.knowledge.router import router as knowledge_router
 from app.knowledge.search_router import router as knowledge_search_router
+from app.memory.router import router as memory_router
 
 
 @asynccontextmanager
@@ -27,6 +29,8 @@ app.add_middleware(
 
 app.include_router(knowledge_router)
 app.include_router(knowledge_search_router)
+app.include_router(chat_router)
+app.include_router(memory_router)
 
 
 @app.get("/health")

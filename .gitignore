@@ -2,9 +2,10 @@
 /vault/*
 !/vault/.gitkeep
 
-# Env / secrets
-.env
-.env.*
+# Env / secrets — catch typo variants too
+.env*
+.enecho
+.enrc
 !.env.example
 
 # Python

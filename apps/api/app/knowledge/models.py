@@ -8,12 +8,9 @@ from datetime import datetime
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import ForeignKey, Text, func
-from sqlalchemy.ext.asyncio import AsyncEngine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
-
-class Base(DeclarativeBase):
-    pass
+from app.base import Base
 
 
 class Note(Base):
@@ -42,9 +39,3 @@ class NoteLink(Base):
     target_note_id: Mapped[int | None] = mapped_column(
         ForeignKey("notes.id"), nullable=True
     )
-
-
-async def init_models(engine: AsyncEngine) -> None:
-    """Create all tables if they don't already exist. Safe to call repeatedly."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)

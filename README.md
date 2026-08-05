@@ -10,12 +10,47 @@ and does tasks on your behalf.
 
 ## Stack
 
-- `apps/api` — FastAPI backend (Python, managed with `uv`). Exposes `/health` and the
-  Knowledge volume's `/knowledge/reindex`, `/knowledge/backfill-embeddings`, and
-  `/knowledge/search` endpoints (vault ingestion, local embeddings, semantic search).
-- `apps/web` — Next.js frontend
+- `apps/api` — FastAPI backend (Python, managed with `uv`). Exposes `/health` plus the
+  Knowledge, Chat and Memory volumes (see Endpoints below).
+- `apps/web` — Next.js frontend. The Jarvis shell (top bar + sidebar) with a Home screen,
+  a Knowledge control panel, and a Chat screen.
 - `vault/` — your Obsidian vault (gitignored — personal notes never get pushed)
 - Postgres + `pgvector` — one database for structured data and vector search (via Docker Compose)
+
+## Endpoints
+
+Knowledge — vault ingestion, local embeddings, semantic search:
+
+- `POST /knowledge/reindex` — scan the vault, upsert notes, rebuild wikilink edges
+- `POST /knowledge/backfill-embeddings` — embed notes that don't have a vector yet
+- `GET /knowledge/search?q=...` — semantic search over your notes
+
+Chat — conversations grounded in your vault and your memories:
+
+- `POST /chat/conversations` — start a conversation
+- `GET /chat/conversations` — list conversations, newest first
+- `GET /chat/conversations/{id}/messages` — full transcript, oldest first
+- `POST /chat/conversations/{id}/messages` — send a message, get the grounded reply
+  (with the notes that grounded it under `sources`)
+- `DELETE /chat/conversations/{id}` — delete a conversation and its messages
+
+Memory — global / project / session facts, semantically recalled on every chat turn:
+
+- `GET /memory?scope=&project=` — list memories, newest first
+- `POST /memory` — store a memory by hand
+- `DELETE /memory/{id}` — forget one
+- `POST /memory/extract` — mine a conversation for durable facts and store them
+
+## Configure your API key
+
+Chat needs an Anthropic API key. Copy [.env.example](.env.example) to `.env` and fill in
+`ANTHROPIC_API_KEY=` with your own key, then restart the API.
+
+Without it everything else still works — vault ingestion, embeddings, search, memory storage
+and recall, and the whole UI — but `POST /chat/conversations/{id}/messages` and
+`POST /memory/extract` return `503`, and the chat screen tells you the key is missing.
+
+`.env` is gitignored. Never commit a real key.
 
 ## Run it locally
 
