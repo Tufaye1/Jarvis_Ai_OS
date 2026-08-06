@@ -317,7 +317,7 @@ async def test_extract_maps_unconfigured_llm_to_llm_unavailable(
         await session.commit()
 
     async def _complete(system, messages, max_tokens=2048):
-        raise llm_module.LLMNotConfigured("ANTHROPIC_API_KEY is not configured")
+        raise llm_module.LLMNotConfigured("LLM_API_KEY is not configured")
 
     monkeypatch.setattr(llm_module, "complete", _complete)
 

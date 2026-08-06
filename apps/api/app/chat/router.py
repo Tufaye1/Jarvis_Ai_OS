@@ -74,7 +74,7 @@ async def post_message(cid: int, payload: MessageCreate) -> dict:
     except LLMNotConfigured as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="ANTHROPIC_API_KEY is not configured",
+            detail="LLM_API_KEY is not configured",
         ) from exc
 
 

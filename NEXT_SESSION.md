@@ -68,7 +68,10 @@ talk to, and the first real Jarvis interface:
 - No queue (Celery/etc.) — single user, synchronous processing is fine for now.
 - No auth — local, single-user app.
 - No desktop app (Tauri) yet — web app first.
-- No LLM gateway abstraction — `app/chat/llm.py` calls the Anthropic API directly.
+- **LLM is provider-agnostic via any OpenAI-compatible endpoint.** `app/chat/llm.py` uses
+  the `openai` SDK pointed at `settings.llm_base_url`, defaulting to OpenRouter. Change
+  provider by editing `.env`: `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` — no code change.
+  OpenAI direct, Groq, Together, and local Ollama all speak the same protocol.
 - Obsidian is the knowledge editor — the API reads/parses the vault, never builds its own
   notes UI. Vault lives at `vault/Jarvis/`.
 - `vault/` is gitignored — personal notes never get pushed to GitHub.
@@ -101,11 +104,11 @@ talk to, and the first real Jarvis interface:
   `app.chat.llm.complete` the same way and raises `LLMUnavailable` (→ 503) if it's missing.
   Both volumes were built in parallel by separate agents, so each has to degrade gracefully when
   the other is absent or half-built. `recall()`'s name and signature are a hard contract.
-- **The chat volume requires an `ANTHROPIC_API_KEY`, and it is not set yet.** `.env.example`
-  has the empty slot; the real `.env` has no value in it. Until you add one, `POST /chat/.../messages`
-  and `POST /memory/extract` return **503** — deliberately, not as a bug. Everything else
-  (knowledge, search, memory storage/recall, the whole UI shell) works without a key, and the
-  chat screen shows a "add your key" notice rather than an error.
+- **Chat requires an `LLM_API_KEY` (OpenRouter by default).** `.env.example` and `.env`
+  have the empty slot plus the OpenRouter base URL and default model. Until you add a key,
+  `POST /chat/.../messages` and `POST /memory/extract` return **503** — deliberately, not
+  as a bug. Everything else (knowledge, search, memory storage/recall, the whole UI shell)
+  works without a key, and the chat screen shows a "add your key" notice rather than an error.
 - The API is imported and started with no key present — the key is only read inside `complete()`,
   never at module load, so a missing key can never break startup.
 - Assistant-card actions ("Save to memory", "Build the review deck", "Draft the client email",

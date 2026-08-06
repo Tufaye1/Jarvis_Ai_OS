@@ -43,14 +43,19 @@ Memory — global / project / session facts, semantically recalled on every chat
 
 ## Configure your API key
 
-Chat needs an Anthropic API key. Copy [.env.example](.env.example) to `.env` and fill in
-`ANTHROPIC_API_KEY=` with your own key, then restart the API.
+Chat talks to any OpenAI-compatible endpoint. Defaults to **OpenRouter**, which routes to
+Claude / GPT / Gemini / Llama / others through one key —
+[get one here](https://openrouter.ai/settings/keys).
 
-Without it everything else still works — vault ingestion, embeddings, search, memory storage
-and recall, and the whole UI — but `POST /chat/conversations/{id}/messages` and
+Copy [.env.example](.env.example) to `.env` and set `LLM_API_KEY`. To change provider,
+change `LLM_BASE_URL` and `LLM_MODEL` — no code change needed. Restart the API to pick
+up new values.
+
+Without a key everything else still works — vault ingestion, embeddings, search, memory
+storage and recall, and the whole UI — but `POST /chat/conversations/{id}/messages` and
 `POST /memory/extract` return `503`, and the chat screen tells you the key is missing.
 
-`.env` is gitignored. Never commit a real key.
+`.env` (and typo variants like `.enecho`) are gitignored. Never commit a real key.
 
 ## Run it locally
 

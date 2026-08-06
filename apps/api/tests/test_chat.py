@@ -204,7 +204,7 @@ async def test_post_message_to_missing_conversation_is_404(
 async def test_complete_raises_when_api_key_is_blank(monkeypatch):
     """No key -> LLMNotConfigured, raised before any client is constructed."""
     for blank in ("", "   "):
-        monkeypatch.setattr(settings, "anthropic_api_key", blank)
+        monkeypatch.setattr(settings, "llm_api_key", blank)
         with pytest.raises(LLMNotConfigured):
             await complete("system", [{"role": ROLE_USER, "content": "hi"}])
 
@@ -218,7 +218,7 @@ async def test_post_message_without_api_key_is_503_and_keeps_user_message(
     key blanked, so it raises LLMNotConfigured before touching the network.
     """
     await init_models(engine)
-    monkeypatch.setattr(settings, "anthropic_api_key", "")
+    monkeypatch.setattr(settings, "llm_api_key", "")
 
     cid = await _create_conversation(api_client, cleanup_conversations)
     content = f"remember this {uuid.uuid4().hex[:8]}"
@@ -227,7 +227,7 @@ async def test_post_message_without_api_key_is_503_and_keeps_user_message(
         f"/chat/conversations/{cid}/messages", json={"content": content}
     )
     assert response.status_code == 503
-    assert response.json()["detail"] == "ANTHROPIC_API_KEY is not configured"
+    assert response.json()["detail"] == "LLM_API_KEY is not configured"
 
     # The user's turn was committed before the LLM call, so it survives.
     transcript = await api_client.get(f"/chat/conversations/{cid}/messages")
