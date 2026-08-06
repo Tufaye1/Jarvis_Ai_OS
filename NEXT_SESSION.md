@@ -68,10 +68,13 @@ talk to, and the first real Jarvis interface:
 - No queue (Celery/etc.) — single user, synchronous processing is fine for now.
 - No auth — local, single-user app.
 - No desktop app (Tauri) yet — web app first.
-- **LLM is provider-agnostic via any OpenAI-compatible endpoint.** `app/chat/llm.py` uses
-  the `openai` SDK pointed at `settings.llm_base_url`, defaulting to OpenRouter. Change
-  provider by editing `.env`: `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` — no code change.
-  OpenAI direct, Groq, Together, and local Ollama all speak the same protocol.
+- **LLM is provider-agnostic with automatic multi-provider failover.** `app/chat/llm.py`
+  uses the `openai` SDK against any OpenAI-compatible endpoint. Primary provider is
+  `LLM_API_KEY/BASE_URL/MODEL`; `LLM_FALLBACKS` is an ordered JSON list of extra
+  providers that get tried in order on retriable errors (429, 401, 402, 5xx, timeouts).
+  Non-retriable errors (400, 404) fail fast without cycling. Current setup: Groq
+  (llama-3.3-70b-versatile) primary → Gemini (flash-latest) → OpenRouter free-tier.
+  Regression covered by `test_failover_moves_to_next_provider_on_retriable_error`.
 - Obsidian is the knowledge editor — the API reads/parses the vault, never builds its own
   notes UI. Vault lives at `vault/Jarvis/`.
 - `vault/` is gitignored — personal notes never get pushed to GitHub.

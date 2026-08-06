@@ -41,15 +41,16 @@ Memory — global / project / session facts, semantically recalled on every chat
 - `DELETE /memory/{id}` — forget one
 - `POST /memory/extract` — mine a conversation for durable facts and store them
 
-## Configure your API key
+## Configure your API key(s)
 
-Chat talks to any OpenAI-compatible endpoint. Defaults to **OpenRouter**, which routes to
-Claude / GPT / Gemini / Llama / others through one key —
-[get one here](https://openrouter.ai/settings/keys).
+Chat talks to any OpenAI-compatible endpoint (OpenAI, OpenRouter, Groq, Google Gemini's
+OpenAI-compat endpoint, local Ollama, …). Copy [.env.example](.env.example) to `.env`
+and set at least `LLM_API_KEY`, then restart the API.
 
-Copy [.env.example](.env.example) to `.env` and set `LLM_API_KEY`. To change provider,
-change `LLM_BASE_URL` and `LLM_MODEL` — no code change needed. Restart the API to pick
-up new values.
+**Multi-provider failover.** Add more providers in `LLM_FALLBACKS` as a JSON list of
+`{"api_key","base_url","model"}`. On rate limits, bad keys, out-of-credits, upstream 5xx
+or timeouts, chat automatically tries the next provider — so you can keep building
+without any single quota blocking you.
 
 Without a key everything else still works — vault ingestion, embeddings, search, memory
 storage and recall, and the whole UI — but `POST /chat/conversations/{id}/messages` and

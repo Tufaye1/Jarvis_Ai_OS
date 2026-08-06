@@ -205,8 +205,79 @@ async def test_complete_raises_when_api_key_is_blank(monkeypatch):
     """No key -> LLMNotConfigured, raised before any client is constructed."""
     for blank in ("", "   "):
         monkeypatch.setattr(settings, "llm_api_key", blank)
+        monkeypatch.setattr(settings, "llm_fallbacks", [])
         with pytest.raises(LLMNotConfigured):
             await complete("system", [{"role": ROLE_USER, "content": "hi"}])
+
+
+async def test_failover_moves_to_next_provider_on_retriable_error(monkeypatch):
+    """Primary failing with a retriable error (429) -> fallback answers.
+
+    Patches AsyncOpenAI at the openai module level so no real HTTP happens.
+    The stub returns 429 for the primary base_url and a canned reply for the
+    fallback, proving the failover loop picks the next provider.
+    """
+    import httpx
+
+    from app.chat import llm as llm_module
+
+    monkeypatch.setattr(settings, "llm_api_key", "primary-key")
+    monkeypatch.setattr(settings, "llm_base_url", "https://primary.example/v1")
+    monkeypatch.setattr(settings, "llm_model", "primary-model")
+    monkeypatch.setattr(
+        settings,
+        "llm_fallbacks",
+        [
+            {
+                "api_key": "fallback-key",
+                "base_url": "https://fallback.example/v1",
+                "model": "fallback-model",
+            }
+        ],
+    )
+
+    class _Msg:
+        def __init__(self, content: str) -> None:
+            self.content = content
+
+    class _Choice:
+        def __init__(self, content: str) -> None:
+            self.message = _Msg(content)
+
+    class _Response:
+        def __init__(self, content: str) -> None:
+            self.choices = [_Choice(content)]
+
+    class _StubCompletions:
+        def __init__(self, base_url: str) -> None:
+            self._base_url = base_url
+
+        async def create(self, **_kwargs):
+            if "primary" in self._base_url:
+                # APITimeoutError is retriable and only needs a Request.
+                from openai import APITimeoutError
+
+                request = httpx.Request("POST", self._base_url + "/chat/completions")
+                raise APITimeoutError(request=request)
+            return _Response("hello from fallback")
+
+    class _StubChat:
+        def __init__(self, base_url: str) -> None:
+            self.completions = _StubCompletions(base_url)
+
+    class _StubClient:
+        def __init__(self, base_url: str, **_kw) -> None:
+            self.chat = _StubChat(base_url)
+
+    def _factory(*, api_key: str, base_url: str, **_kw):  # noqa: ARG001
+        return _StubClient(base_url)
+
+    monkeypatch.setattr(llm_module, "AsyncOpenAI", _factory)
+
+    result = await complete(
+        "system", [{"role": ROLE_USER, "content": "hi"}], max_tokens=10
+    )
+    assert result == "hello from fallback"
 
 
 async def test_post_message_without_api_key_is_503_and_keeps_user_message(
@@ -219,6 +290,7 @@ async def test_post_message_without_api_key_is_503_and_keeps_user_message(
     """
     await init_models(engine)
     monkeypatch.setattr(settings, "llm_api_key", "")
+    monkeypatch.setattr(settings, "llm_fallbacks", [])
 
     cid = await _create_conversation(api_client, cleanup_conversations)
     content = f"remember this {uuid.uuid4().hex[:8]}"

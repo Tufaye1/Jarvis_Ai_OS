@@ -7,7 +7,7 @@ maps to 503 so the frontend can tell "broken" from "not set up yet".
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
-from app.chat.llm import LLMNotConfigured
+from app.chat.llm import AllProvidersFailed, LLMNotConfigured
 from app.chat.models import Conversation, Message
 from app.chat.schemas import ChatTurnOut, ConversationOut, MessageCreate, MessageOut
 from app.chat.service import ConversationNotFound, send_message
@@ -75,6 +75,11 @@ async def post_message(cid: int, payload: MessageCreate) -> dict:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="LLM_API_KEY is not configured",
+        ) from exc
+    except AllProvidersFailed as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"All LLM providers failed. Last errors: {exc}",
         ) from exc
 
 

@@ -17,7 +17,7 @@ const NOTICE_COPY: Record<
   unconfigured: {
     eyebrow: "CHAT NOT CONFIGURED",
     title: "Chat needs an LLM_API_KEY in .env to answer",
-    body: "Your message was saved to the conversation. Add LLM_API_KEY (OpenRouter by default) to the API's .env file and restart it — the rest of Jarvis (knowledge, search, memory) works without it.",
+    body: "Your message was saved to the conversation. Add LLM_API_KEY (and optionally LLM_FALLBACKS for automatic multi-provider failover) to the API's .env file and restart it — the rest of Jarvis (knowledge, search, memory) works without it.",
   },
   offline: {
     eyebrow: "API UNREACHABLE",
