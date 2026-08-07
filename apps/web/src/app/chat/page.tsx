@@ -34,6 +34,10 @@ export default function ChatPage() {
   const [notice, setNotice] = useState<ChatNotice | null>(null);
   const [draft, setDraft] = useState("");
   const [lastAttempt, setLastAttempt] = useState("");
+  // Which assistant message id should typewriter-reveal. Set on new turn;
+  // cleared when the user opens a different conversation so history doesn't
+  // re-animate.
+  const [animateId, setAnimateId] = useState<number | null>(null);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -72,6 +76,7 @@ export default function ChatPage() {
     setActiveId(id);
     setNotice(null);
     setLoadingThread(true);
+    setAnimateId(null); // re-opening history should not re-animate old replies
     try {
       setMessages(await listMessages(id));
     } catch (error) {
@@ -158,6 +163,8 @@ export default function ChatPage() {
           turn.user_message,
           turn.assistant_message,
         ]);
+        // Only this one just-arrived reply should typewriter-reveal.
+        setAnimateId(turn.assistant_message.id);
         // The first message derives the conversation title server-side.
         listConversations()
           .then(setConversations)
@@ -224,6 +231,7 @@ export default function ChatPage() {
               isSending={sending}
               notice={notice}
               loading={booting || loadingThread}
+              animateId={animateId}
               onRetry={
                 notice?.kind === "offline" && lastAttempt
                   ? () => void submit(lastAttempt)

@@ -119,12 +119,15 @@ export default function MessageThread({
   notice,
   onRetry,
   loading,
+  animateId,
 }: {
   messages: Message[];
   isSending: boolean;
   notice: ChatNotice | null;
   onRetry?: () => void;
   loading: boolean;
+  /** Id of the assistant message that just arrived this session — animates once. */
+  animateId?: number | null;
 }) {
   if (loading) {
     return (
@@ -148,6 +151,7 @@ export default function MessageThread({
             <AssistantCard
               content={message.content}
               sources={message.sources}
+              animate={message.id === animateId}
             />
           </div>
         ),
