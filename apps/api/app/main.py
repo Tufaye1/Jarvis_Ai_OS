@@ -6,6 +6,7 @@ from sqlalchemy import text
 
 from app.base import init_models
 from app.chat.router import router as chat_router
+from app.content.router import router as content_router
 from app.db import engine
 from app.knowledge.router import router as knowledge_router
 from app.knowledge.search_router import router as knowledge_search_router
@@ -37,6 +38,7 @@ app.include_router(memory_router)
 app.include_router(projects_router)
 app.include_router(tasks_router)
 app.include_router(planner_router)
+app.include_router(content_router)
 
 
 @app.get("/health")

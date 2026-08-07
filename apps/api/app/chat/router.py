@@ -79,7 +79,9 @@ async def post_message(cid: int, payload: MessageCreate) -> dict:
     except AllProvidersFailed as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"All LLM providers failed. Last errors: {exc}",
+            # Don't include str(exc) — it enumerates the configured provider
+            # model names. Static message keeps our provider chain private.
+            detail="All LLM providers are currently unavailable",
         ) from exc
 
 

@@ -232,6 +232,7 @@ export default function ChatPage() {
               notice={notice}
               loading={booting || loadingThread}
               animateId={animateId}
+              conversationId={activeId}
               onRetry={
                 notice?.kind === "offline" && lastAttempt
                   ? () => void submit(lastAttempt)

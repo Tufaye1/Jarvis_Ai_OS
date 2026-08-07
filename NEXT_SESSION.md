@@ -87,6 +87,34 @@ panels are now backed by real data instead of hardcoded mockups:
   Planner and Projects endpoints on mount; the placeholder arrays are gone. Quick-action cards
   still route to `/chat`, `/projects` and `/planner`.
 
+Day 5 (Content Studio volume) complete — the assistant can now turn a project + its notes +
+the conversation history into an actual draft, not just chat about one:
+
+- **Content Studio backend** (`apps/api/app/content/`) — one `content` table (id, kind, title,
+  body, tone, length, `project_id`, `conversation_id`, `sources` JSONB, status, timestamps) and
+  a `POST /content/generate` endpoint that supports 7 kinds: **LinkedIn post**, **Blog post**,
+  **Email**, **Proposal**, **Report**, **Deck outline**, **Tweet**. Each generate call runs the
+  brief through the Knowledge volume's `semantic_search`, recalls memories via
+  `memory.recall()`, and calls the same multi-provider failover LLM (`app/chat/llm.py`) chat
+  uses — so a Groq rate-limit doesn't break Content Studio either.
+- **Same fencing pattern as chat** — retrieved notes and recalled memories go into the system
+  prompt inside a `<retrieved_context>` block, with fence tags stripped from body text before
+  they're inlined, so a malicious note can't jailbreak the drafter. `sources` are stored on the
+  row in the same JSONB shape chat uses for `Message.sources`, so the frontend renders the same
+  citation chip UI in both places.
+- **Prompt library per kind** (`prompts.py`) — one system prompt per kind, and `tone` and
+  `length` are appended as hints (free-text tone, enum-ish length: short/medium/long). No
+  fine-tuning, no per-kind model — the prompts do the differentiation.
+- **CRUD** — `GET /content` (filter by `project_id` / `kind`), `GET /content/{id}`,
+  `PATCH /content/{id}` (edit title/body/tone/length/kind), `DELETE /content/{id}`.
+- **`/content` page** (`apps/web/src/app/content/`) — kind picker (7 kinds), project source
+  picker (pulls `/projects`), optional conversation picker, tone + length controls, a
+  generation preview with the sources it grounded on, and a saved-drafts list. Uses the same
+  typed `api.ts` client, extended with a `content` namespace.
+- **Wired assistant-card actions** — the two inert Day-3 actions "Build the review deck" and
+  "Draft the client email" now call `POST /content/generate` (with kind `deck_outline` and
+  `email` respectively) and take you to the resulting draft.
+
 ## Decisions log
 
 - Multi-agent build pipeline designed for per-volume work (build → review/vuln/security →
@@ -170,20 +198,35 @@ panels are now backed by real data instead of hardcoded mockups:
   (fixed during Day 4 for `completed_at`), but if we ever expose a public API where clients
   send arbitrary tz-aware datetimes we should either switch the columns to `TIMESTAMPTZ` or
   document the coercion. Not a bug for MVP; note for later.
+- **Content drafts persist even when the LLM fails.** `POST /content/generate` writes the
+  `content` row first (with the brief, kind, tone, length and gathered `sources`) and only
+  then calls the LLM; if the provider chain fails, the row is kept with a `status="failed"`
+  and the error stashed on it, and the endpoint returns the row with an empty `body`. Failed
+  attempts are therefore auditable (you can see what was tried and why it failed) instead of
+  silently vanishing, and a follow-up retry can reuse the same row.
+- **Tone and length are prompt hints, not per-kind models.** Each of the 7 kinds has one
+  system prompt in `content/prompts.py`; `tone` (free-text: "warm", "matter-of-fact", …) and
+  `length` (short/medium/long enum-ish) are appended as guidance. No fine-tuning, no per-kind
+  routing — the same LLM handles all of them. Keeps the model surface small; if a kind's
+  output quality slips we can swap its prompt without touching the rest of the pipeline.
+- **`content.sources` reuses the chat sources shape.** Stored as JSONB with the same
+  `{title, snippet, similarity, vault_path, ...}` shape chat writes to `Message.sources`, so
+  the frontend's existing citation-chip component renders both without a translation layer.
+  Grounding is done via the same `semantic_search` + `memory.recall()` pair chat uses — one
+  code path for "get context for the LLM", not two.
 
 ## Next step
 
-**First, add your `LLM_API_KEY` to `.env` and restart the API** — Day 3 is built and wired
-but chat stays at 503 until that lands. Then take a real conversation end to end and run
-`POST /memory/extract` on it to see the memory loop close.
+Day 6, pick one:
 
-Day 5, pick one:
-
-- **Content Studio** — turn a project + its notes + the conversation history into drafts
-  (docs, emails, review decks). The assistant-card actions ("Build the review deck",
-  "Draft the client email") get real endpoints behind them, and note→project attribution
-  finally gets promoted to a real FK.
-- **Voice** — the top-bar voice button becomes real: mic capture, STT into the chat pipeline,
-  TTS on the reply. Same chat/memory/knowledge loop, new I/O surface.
-- **Add real notes to the vault and dogfood** — no new volume; instead, live in Jarvis for a
-  few days, capture actual friction, and let the next volume choice fall out of what breaks.
+- **Voice** — the top-bar voice button becomes real: mic capture, STT into the chat and
+  Content Studio pipelines, TTS on the reply. Same chat/memory/knowledge/content loop, new
+  I/O surface.
+- **Dogfood more** — no new volume; instead, live in Jarvis for a few days now that chat,
+  memory, projects, planner and content are all real, capture actual friction, and let the
+  next volume choice fall out of what breaks.
+- **Deferred vault-cleanup bug fix** — when a note's file is deleted from the vault its DB
+  row is still orphaned forever (and still surfaced by semantic search + still cited by
+  chat and content drafts). `POST /knowledge/reindex` should tombstone or delete missing
+  notes and cascade to `note_links` / stale embeddings. Small, self-contained, high value
+  now that content drafts pull grounding from notes.

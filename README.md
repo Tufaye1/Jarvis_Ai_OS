@@ -11,10 +11,11 @@ and does tasks on your behalf.
 ## Stack
 
 - `apps/api` — FastAPI backend (Python, managed with `uv`). Exposes `/health` plus the
-  Knowledge, Chat, Memory, Projects, Tasks and Planner volumes (see Endpoints below).
+  Knowledge, Chat, Memory, Projects, Tasks, Planner and Content volumes (see Endpoints
+  below).
 - `apps/web` — Next.js frontend. The Jarvis shell (top bar + sidebar) with a Home screen
-  (wired to real Planner + Projects data), a Knowledge control panel, a Chat screen, and
-  Projects and Planner pages.
+  (wired to real Planner + Projects data), a Knowledge control panel, a Chat screen,
+  Projects and Planner pages, and a Content Studio (`/content`) page.
 - `vault/` — your Obsidian vault (gitignored — personal notes never get pushed)
 - Postgres + `pgvector` — one database for structured data and vector search (via Docker Compose)
 
@@ -63,6 +64,18 @@ Planner — the ranked "what to do next" list, deterministic and pure-SQL (no LL
 
 - `GET /planner/today?limit=` — overdue + due-today first, then by priority, then oldest first
 - `GET /planner/upcoming?days=&limit=` — same ranking over the next N days (default 7)
+
+Content Studio — draft LinkedIn posts, blog posts, emails, proposals, reports, deck
+outlines and tweets from a project, notes and conversation history, grounded via the
+same semantic search + memory recall as chat:
+
+- `POST /content/generate` — generate a draft; body picks `kind`, tone and length hints,
+  and an optional `project_id` / `conversation_id` to seed grounding. The draft row is
+  persisted even if the LLM call fails, so failed attempts stay auditable.
+- `GET /content?project_id=&kind=` — list drafts, newest first
+- `GET /content/{id}` — read one
+- `PATCH /content/{id}` — edit the draft (title, body, tone, length, kind)
+- `DELETE /content/{id}` — delete a draft
 
 ## Configure your API key(s)
 

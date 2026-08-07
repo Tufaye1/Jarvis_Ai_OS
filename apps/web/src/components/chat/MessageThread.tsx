@@ -120,6 +120,7 @@ export default function MessageThread({
   onRetry,
   loading,
   animateId,
+  conversationId = null,
 }: {
   messages: Message[];
   isSending: boolean;
@@ -128,6 +129,8 @@ export default function MessageThread({
   loading: boolean;
   /** Id of the assistant message that just arrived this session — animates once. */
   animateId?: number | null;
+  /** Conversation these messages belong to — threaded to AssistantCard actions. */
+  conversationId?: number | null;
 }) {
   if (loading) {
     return (
@@ -143,19 +146,28 @@ export default function MessageThread({
     <div>
       {isEmpty && <EmptyState />}
 
-      {messages.map((message) =>
-        message.role === "user" ? (
-          <UserBubble key={message.id} content={message.content} />
-        ) : (
+      {messages.map((message, i) => {
+        if (message.role === "user") {
+          return <UserBubble key={message.id} content={message.content} />;
+        }
+        // Actions need the user turn that produced this reply as their prompt.
+        // Look at the immediately-preceding message and use it only if it's a
+        // user turn — an assistant-first orphan (rare, but possible) stays inert.
+        const prev = i > 0 ? messages[i - 1] : null;
+        const userPrompt =
+          prev && prev.role === "user" ? prev.content : null;
+        return (
           <div key={message.id} className="mb-5">
             <AssistantCard
               content={message.content}
               sources={message.sources}
               animate={message.id === animateId}
+              conversationId={conversationId}
+              userPrompt={userPrompt}
             />
           </div>
-        ),
-      )}
+        );
+      })}
 
       {isSending && <ThinkingCard />}
 

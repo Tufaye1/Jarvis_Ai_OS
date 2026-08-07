@@ -20,6 +20,7 @@ _MODEL_MODULES = (
     "app.chat.models",
     "app.projects.models",
     "app.tasks.models",
+    "app.content.models",
 )
 
 

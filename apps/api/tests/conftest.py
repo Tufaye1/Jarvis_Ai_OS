@@ -6,6 +6,7 @@ from sqlalchemy import delete, or_, select, text
 
 from app.chat.models import Conversation, Message
 from app.config import settings
+from app.content.models import ContentDraft
 from app.db import async_session, engine
 from app.knowledge.models import Note, NoteLink
 from app.memory.models import Memory
@@ -129,6 +130,23 @@ async def cleanup_tasks():
         return
     async with async_session() as session:
         await session.execute(delete(Task).where(Task.id.in_(task_ids)))
+        await session.commit()
+
+
+@pytest.fixture
+async def cleanup_content():
+    """Yield a list; append the id of any ContentDraft a test creates.
+
+    ContentDraft.project_id and ContentDraft.source_conversation_id are both
+    ON DELETE SET NULL, so ordering against `cleanup_projects` /
+    `cleanup_conversations` does not matter.
+    """
+    content_ids: list[int] = []
+    yield content_ids
+    if not content_ids:
+        return
+    async with async_session() as session:
+        await session.execute(delete(ContentDraft).where(ContentDraft.id.in_(content_ids)))
         await session.commit()
 
 

@@ -374,3 +374,105 @@ export interface PlannerToday {
 export function getPlannerToday(): Promise<PlannerToday> {
   return request<PlannerToday>("/planner/today", { cache: "no-store" });
 }
+
+/* -------------------------------------------------------------- content --- */
+
+export type ContentKind =
+  | "linkedin"
+  | "blog"
+  | "email"
+  | "proposal"
+  | "report"
+  | "deck_outline"
+  | "tweet";
+
+export type ContentStatus = "draft" | "final" | "archived";
+
+export type ContentLength = "short" | "medium" | "long";
+
+export interface ContentDraft {
+  id: number;
+  kind: ContentKind;
+  title: string | null;
+  /** Null when the LLM call failed but the row was persisted anyway. */
+  body: string | null;
+  prompt: string;
+  tone: string | null;
+  length: ContentLength | null;
+  status: ContentStatus;
+  project_id: number | null;
+  source_conversation_id: number | null;
+  sources: Source[] | null;
+  model: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContentGenerateRequest {
+  kind: ContentKind;
+  prompt: string;
+  project_id?: number | null;
+  tone?: string | null;
+  length?: ContentLength | null;
+  source_conversation_id?: number | null;
+  notes_query?: string | null;
+}
+
+export interface ContentUpdate {
+  title?: string | null;
+  body?: string;
+  tone?: string | null;
+  length?: ContentLength | null;
+  status?: ContentStatus;
+}
+
+export function generateContent(
+  payload: ContentGenerateRequest,
+): Promise<ContentDraft> {
+  return request<ContentDraft>("/content/generate", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: payload.kind,
+      prompt: payload.prompt,
+      project_id: payload.project_id ?? null,
+      tone: payload.tone ?? null,
+      length: payload.length ?? null,
+      source_conversation_id: payload.source_conversation_id ?? null,
+      notes_query: payload.notes_query ?? null,
+    }),
+  });
+}
+
+export function listContent(params?: {
+  project_id?: number;
+  kind?: ContentKind;
+  status?: ContentStatus;
+  limit?: number;
+}): Promise<ContentDraft[]> {
+  const query = new URLSearchParams();
+  if (params?.project_id !== undefined)
+    query.set("project_id", String(params.project_id));
+  if (params?.kind) query.set("kind", params.kind);
+  if (params?.status) query.set("status", params.status);
+  if (params?.limit !== undefined) query.set("limit", String(params.limit));
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return request<ContentDraft[]>(`/content${suffix}`, { cache: "no-store" });
+}
+
+export function getContent(id: number): Promise<ContentDraft> {
+  return request<ContentDraft>(`/content/${id}`, { cache: "no-store" });
+}
+
+export function updateContent(
+  id: number,
+  patch: ContentUpdate,
+): Promise<ContentDraft> {
+  return request<ContentDraft>(`/content/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export function deleteContent(id: number): Promise<void> {
+  return request<void>(`/content/${id}`, { method: "DELETE" });
+}

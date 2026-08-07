@@ -79,6 +79,7 @@ const NAV: NavItem[] = [
   },
   {
     label: "Content Studio",
+    href: "/content",
     icon: (
       <svg {...iconProps}>
         <path d="M3 13h10M4.4 10.6l6.4-6.4 1.8 1.8-6.4 6.4H4.4z" />

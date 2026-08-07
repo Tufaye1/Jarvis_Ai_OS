@@ -1,8 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import type { Source } from "@/lib/api";
+import {
+  generateContent,
+  isApiError,
+  type ContentDraft,
+  type ContentKind,
+  type Source,
+} from "@/lib/api";
 
 /** Chars per tick and tick interval — together they give ~200 chars/sec. Fast
  *  enough to not feel slow on a long paragraph, slow enough to read as typing. */
@@ -12,13 +19,35 @@ const REVEAL_TICK_MS = 20;
 /** The four pastel tints, cycled across source chips. */
 const TINTS = ["#D8E8F6", "#DCEFD9", "#FBF0C4", "#E9E0F7"];
 
-/** Buttons the design calls for. No endpoint backs them yet, so they do nothing. */
-const ACTIONS = [
-  "Save to memory",
-  "Build the review deck",
-  "Draft the client email",
-  "Research this further",
+/** Label + optional Content Studio kind. Kinds route to `generateContent`;
+ *  labels with no kind stay inert with a "Not wired up yet" tooltip. */
+const ACTIONS: { label: string; kind: ContentKind | null }[] = [
+  { label: "Save to memory", kind: null },
+  { label: "Build the review deck", kind: "deck_outline" },
+  { label: "Draft the client email", kind: "email" },
+  { label: "Research this further", kind: null },
 ];
+
+/** Human-readable label for the success pill, per kind. */
+const KIND_NOUN: Record<ContentKind, string> = {
+  linkedin: "LinkedIn post",
+  blog: "Blog post",
+  email: "Email draft",
+  proposal: "Proposal",
+  report: "Report",
+  deck_outline: "Deck outline",
+  tweet: "Tweet",
+};
+
+function errorDetail(error: unknown): string {
+  if (isApiError(error)) {
+    if (error.isOffline) return "API unreachable";
+    if (error.isUnconfigured) return "LLM not configured";
+    return error.detail?.trim() || `HTTP ${error.status}`;
+  }
+  if (error instanceof Error && error.message) return error.message;
+  return "unexpected error";
+}
 
 const EYEBROW =
   "text-[10.5px] font-bold tracking-[0.7px] text-ink-eyebrow mb-[9px]";
@@ -69,21 +98,56 @@ export function JarvisMark() {
   );
 }
 
+type ActionResult =
+  | { kind: "success"; draft: ContentDraft }
+  | { kind: "error"; message: string };
+
 export default function AssistantCard({
   content,
   sources,
   animate = false,
+  conversationId = null,
+  userPrompt = null,
 }: {
   content: string;
   sources: Source[] | null;
   /** True only for a reply that just arrived; drives the typewriter reveal.
    *  Old messages from history render fully immediately. */
   animate?: boolean;
+  /** Conversation this card belongs to; needed to wire the Content Studio actions. */
+  conversationId?: number | null;
+  /** The user turn that produced this reply; used as the prompt for generation. */
+  userPrompt?: string | null;
 }) {
   // Progressive reveal. When animate=false, jump straight to the end.
   const [revealed, setRevealed] = useState(animate ? 0 : content.length);
   const done = revealed >= content.length;
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const [pending, setPending] = useState(false);
+  const [result, setResult] = useState<ActionResult | null>(null);
+
+  const wireable =
+    typeof conversationId === "number" &&
+    typeof userPrompt === "string" &&
+    userPrompt.trim().length > 0;
+
+  const runAction = async (kind: ContentKind) => {
+    if (pending || !wireable) return;
+    setPending(true);
+    setResult(null);
+    try {
+      const draft = await generateContent({
+        kind,
+        prompt: userPrompt as string,
+        source_conversation_id: conversationId as number,
+      });
+      setResult({ kind: "success", draft });
+    } catch (error) {
+      setResult({ kind: "error", message: errorDetail(error) });
+    } finally {
+      setPending(false);
+    }
+  };
 
   useEffect(() => {
     if (done) return;
@@ -162,22 +226,90 @@ export default function AssistantCard({
       {done && (
         <section className="mt-[18px] border-t border-divider pt-4">
           <div className={EYEBROW}>ACTIONS</div>
-          <div className="flex flex-wrap gap-2">
-            {ACTIONS.map((label, i) => (
-              <button
-                key={label}
-                type="button"
-                title="Not wired up yet"
-                className={
-                  i === 0
-                    ? "rounded-nav bg-ink px-[13px] py-2 text-[12.5px] font-semibold text-white"
-                    : "rounded-nav border border-border-button px-[13px] py-2 text-[12.5px] font-semibold text-ink hover:border-ink"
-                }
+
+          {result?.kind === "success" && (
+            <div className="mb-[10px] inline-flex items-center gap-[8px] rounded-nav bg-[#E7F1E5] px-[11px] py-[6px] text-[12px] font-semibold text-ink">
+              <span
+                aria-hidden
+                className="h-[6px] w-[6px] rounded-full bg-[#3F8F45]"
+              />
+              <span>{KIND_NOUN[result.draft.kind]} created</span>
+              <Link
+                href="/content"
+                className="text-ink-secondary underline underline-offset-2 hover:text-ink"
               >
-                {label}
-              </button>
-            ))}
-          </div>
+                → /content/{result.draft.id}
+              </Link>
+            </div>
+          )}
+
+          {result?.kind === "error" && (
+            <div className="mb-[10px] inline-flex items-center gap-[8px] rounded-nav bg-[#FBEDE5] px-[11px] py-[6px] text-[12px] font-semibold text-ink">
+              <span
+                aria-hidden
+                className="h-[6px] w-[6px] rounded-full bg-[#C25A3B]"
+              />
+              <span>Couldn&rsquo;t generate — {result.message}</span>
+            </div>
+          )}
+
+          {pending ? (
+            <div>
+              <span
+                aria-live="polite"
+                className="inline-flex items-center gap-[8px] rounded-nav border border-border-button bg-muted px-[13px] py-2 text-[12.5px] font-semibold text-ink-secondary"
+                style={{ animation: "jvCaret 1400ms ease-in-out infinite" }}
+              >
+                <span
+                  aria-hidden
+                  className="h-[6px] w-[6px] rounded-full bg-ink-secondary"
+                />
+                Generating…
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {ACTIONS.map((action, i) => {
+                const primary = i === 0;
+                const cls = primary
+                  ? "rounded-nav bg-ink px-[13px] py-2 text-[12.5px] font-semibold text-white"
+                  : "rounded-nav border border-border-button px-[13px] py-2 text-[12.5px] font-semibold text-ink hover:border-ink";
+                const disabledCls =
+                  " disabled:cursor-not-allowed disabled:opacity-60";
+
+                if (action.kind === null) {
+                  return (
+                    <button
+                      key={action.label}
+                      type="button"
+                      title="Not wired up yet"
+                      className={cls}
+                    >
+                      {action.label}
+                    </button>
+                  );
+                }
+
+                const disabled = !wireable;
+                return (
+                  <button
+                    key={action.label}
+                    type="button"
+                    onClick={() => void runAction(action.kind as ContentKind)}
+                    disabled={disabled}
+                    title={
+                      disabled
+                        ? "Needs a conversation and a preceding message"
+                        : undefined
+                    }
+                    className={cls + disabledCls}
+                  >
+                    {action.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </section>
       )}
 
