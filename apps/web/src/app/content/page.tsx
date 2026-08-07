@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+
+import RevealText from "@/components/ui/RevealText";
 import {
   deleteContent,
   generateContent,
@@ -89,6 +91,9 @@ export default function ContentStudioPage() {
   const [drafts, setDrafts] = useState<ContentDraft[] | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  // Which draft id should typewriter-reveal (only set on fresh generation;
+  // opening an existing draft skips the animation).
+  const [animateId, setAnimateId] = useState<number | null>(null);
 
   /* ---- action state ---- */
   const [generating, setGenerating] = useState(false);
@@ -159,6 +164,7 @@ export default function ContentStudioPage() {
         return [draft, ...rest].slice(0, 8);
       });
       setSelectedId(draft.id);
+      setAnimateId(draft.id);
     } catch (err) {
       setGenError(friendlyError(err));
     } finally {
@@ -377,6 +383,8 @@ export default function ContentStudioPage() {
                       type="button"
                       onClick={() => {
                         setSelectedId(d.id);
+                        // Old drafts render fully — only fresh generations animate.
+                        setAnimateId(null);
                         setActionError(null);
                         setCopyOk(false);
                       }}
@@ -457,13 +465,19 @@ export default function ContentStudioPage() {
                   </h2>
                 )}
 
-                <div className="max-w-[620px] whitespace-pre-wrap text-[14.5px] leading-[1.68] text-ink-hover">
-                  {selected.body ?? (
+                {selected.body ? (
+                  <RevealText
+                    text={selected.body}
+                    animate={selected.id === animateId}
+                    className="max-w-[620px] whitespace-pre-wrap text-[14.5px] leading-[1.68] text-ink-hover"
+                  />
+                ) : (
+                  <div className="max-w-[620px] text-[14.5px] leading-[1.68]">
                     <span className="italic text-ink-muted-2">
                       Generation failed for this draft — no body was saved.
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {selected.sources && selected.sources.length > 0 && (
                   <div className="mt-5 border-t border-divider pt-4">
