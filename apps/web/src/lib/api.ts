@@ -220,3 +220,157 @@ export function extractMemories(
     body: JSON.stringify({ conversation_id: conversationId }),
   });
 }
+
+/* ------------------------------------------------------------- projects --- */
+
+export type ProjectStatus = "active" | "archived";
+
+export interface Project {
+  id: number;
+  name: string;
+  description: string | null;
+  status: ProjectStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectCounts {
+  tasks_open: number;
+  tasks_done: number;
+  memories: number;
+}
+
+export interface ProjectDetail extends Project {
+  counts: ProjectCounts;
+}
+
+export function listProjects(params?: {
+  status?: ProjectStatus;
+}): Promise<Project[]> {
+  const query = new URLSearchParams();
+  if (params?.status) query.set("status", params.status);
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return request<Project[]>(`/projects${suffix}`, { cache: "no-store" });
+}
+
+export function getProject(id: number): Promise<ProjectDetail> {
+  return request<ProjectDetail>(`/projects/${id}`, { cache: "no-store" });
+}
+
+export function createProject(input: {
+  name: string;
+  description?: string | null;
+}): Promise<Project> {
+  return request<Project>("/projects", {
+    method: "POST",
+    body: JSON.stringify({
+      name: input.name,
+      description: input.description ?? null,
+    }),
+  });
+}
+
+export function updateProject(
+  id: number,
+  patch: {
+    name?: string;
+    description?: string | null;
+    status?: ProjectStatus;
+  },
+): Promise<Project> {
+  return request<Project>(`/projects/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export function deleteProject(id: number): Promise<void> {
+  return request<void>(`/projects/${id}`, { method: "DELETE" });
+}
+
+/* ---------------------------------------------------------------- tasks --- */
+
+export type TaskStatus = "todo" | "doing" | "done";
+
+export interface Task {
+  id: number;
+  title: string;
+  description: string | null;
+  project_id: number | null;
+  status: TaskStatus;
+  due_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export function listTasks(params?: {
+  project_id?: number;
+  status?: TaskStatus;
+  limit?: number;
+}): Promise<Task[]> {
+  const query = new URLSearchParams();
+  if (params?.project_id !== undefined)
+    query.set("project_id", String(params.project_id));
+  if (params?.status) query.set("status", params.status);
+  if (params?.limit !== undefined) query.set("limit", String(params.limit));
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return request<Task[]>(`/tasks${suffix}`, { cache: "no-store" });
+}
+
+export function getTask(id: number): Promise<Task> {
+  return request<Task>(`/tasks/${id}`, { cache: "no-store" });
+}
+
+export function createTask(input: {
+  title: string;
+  description?: string | null;
+  project_id?: number | null;
+  due_at?: string | null;
+}): Promise<Task> {
+  return request<Task>("/tasks", {
+    method: "POST",
+    body: JSON.stringify({
+      title: input.title,
+      description: input.description ?? null,
+      project_id: input.project_id ?? null,
+      due_at: input.due_at ?? null,
+    }),
+  });
+}
+
+export function updateTask(
+  id: number,
+  patch: {
+    title?: string;
+    description?: string | null;
+    project_id?: number | null;
+    status?: TaskStatus;
+    due_at?: string | null;
+  },
+): Promise<Task> {
+  return request<Task>(`/tasks/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export function deleteTask(id: number): Promise<void> {
+  return request<void>(`/tasks/${id}`, { method: "DELETE" });
+}
+
+/* -------------------------------------------------------------- planner --- */
+
+export interface PlannerToday {
+  /** ISO date, e.g. "2026-08-07". */
+  date: string;
+  priorities: Task[];
+  overdue: Task[];
+  due_today: Task[];
+  in_progress: Task[];
+  completed_today: Task[];
+}
+
+export function getPlannerToday(): Promise<PlannerToday> {
+  return request<PlannerToday>("/planner/today", { cache: "no-store" });
+}

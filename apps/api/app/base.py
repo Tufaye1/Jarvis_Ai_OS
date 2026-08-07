@@ -18,6 +18,8 @@ _MODEL_MODULES = (
     "app.knowledge.models",
     "app.memory.models",
     "app.chat.models",
+    "app.projects.models",
+    "app.tasks.models",
 )
 
 

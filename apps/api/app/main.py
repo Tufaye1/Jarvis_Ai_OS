@@ -10,6 +10,9 @@ from app.db import engine
 from app.knowledge.router import router as knowledge_router
 from app.knowledge.search_router import router as knowledge_search_router
 from app.memory.router import router as memory_router
+from app.planner.router import router as planner_router
+from app.projects.router import router as projects_router
+from app.tasks.router import router as tasks_router
 
 
 @asynccontextmanager
@@ -31,6 +34,9 @@ app.include_router(knowledge_router)
 app.include_router(knowledge_search_router)
 app.include_router(chat_router)
 app.include_router(memory_router)
+app.include_router(projects_router)
+app.include_router(tasks_router)
+app.include_router(planner_router)
 
 
 @app.get("/health")

@@ -41,6 +41,7 @@ const NAV: NavItem[] = [
   },
   {
     label: "Projects",
+    href: "/projects",
     icon: (
       <svg {...iconProps}>
         <path d="M2.4 5.2h4l1.2 1.6h6v6.2H2.4z" />
@@ -59,6 +60,7 @@ const NAV: NavItem[] = [
   },
   {
     label: "Planner",
+    href: "/planner",
     icon: (
       <svg {...iconProps}>
         <rect x="2.6" y="3.6" width="10.8" height="9.8" rx="1.6" />

@@ -9,6 +9,8 @@ from app.config import settings
 from app.db import async_session, engine
 from app.knowledge.models import Note, NoteLink
 from app.memory.models import Memory
+from app.projects.models import Project
+from app.tasks.models import Task
 
 
 @pytest.fixture
@@ -94,6 +96,39 @@ async def cleanup_memories():
         return
     async with async_session() as session:
         await session.execute(delete(Memory).where(Memory.id.in_(memory_ids)))
+        await session.commit()
+
+
+@pytest.fixture
+async def cleanup_projects():
+    """Yield a list; append the id of any Project a test creates.
+
+    After the test, deletes those Projects. Task.project_id has ON DELETE
+    SET NULL, so any tasks the test created against these projects survive
+    -- they must be tracked via `cleanup_tasks` if the test wants them gone.
+    """
+    project_ids: list[int] = []
+    yield project_ids
+    if not project_ids:
+        return
+    async with async_session() as session:
+        await session.execute(delete(Project).where(Project.id.in_(project_ids)))
+        await session.commit()
+
+
+@pytest.fixture
+async def cleanup_tasks():
+    """Yield a list; append the id of any Task a test creates.
+
+    After the test, deletes those Tasks. Ordering against `cleanup_projects`
+    does not matter -- Task.project_id is ON DELETE SET NULL.
+    """
+    task_ids: list[int] = []
+    yield task_ids
+    if not task_ids:
+        return
+    async with async_session() as session:
+        await session.execute(delete(Task).where(Task.id.in_(task_ids)))
         await session.commit()
 
 

@@ -11,9 +11,10 @@ and does tasks on your behalf.
 ## Stack
 
 - `apps/api` — FastAPI backend (Python, managed with `uv`). Exposes `/health` plus the
-  Knowledge, Chat and Memory volumes (see Endpoints below).
-- `apps/web` — Next.js frontend. The Jarvis shell (top bar + sidebar) with a Home screen,
-  a Knowledge control panel, and a Chat screen.
+  Knowledge, Chat, Memory, Projects, Tasks and Planner volumes (see Endpoints below).
+- `apps/web` — Next.js frontend. The Jarvis shell (top bar + sidebar) with a Home screen
+  (wired to real Planner + Projects data), a Knowledge control panel, a Chat screen, and
+  Projects and Planner pages.
 - `vault/` — your Obsidian vault (gitignored — personal notes never get pushed)
 - Postgres + `pgvector` — one database for structured data and vector search (via Docker Compose)
 
@@ -40,6 +41,28 @@ Memory — global / project / session facts, semantically recalled on every chat
 - `POST /memory` — store a memory by hand
 - `DELETE /memory/{id}` — forget one
 - `POST /memory/extract` — mine a conversation for durable facts and store them
+
+Projects — the things you're working on:
+
+- `POST /projects` — create a project
+- `GET /projects?status=` — list projects, optionally filtered by status
+- `GET /projects/{id}` — read one
+- `PATCH /projects/{id}` — update name / description / status
+- `DELETE /projects/{id}` — delete (tasks are kept, their `project_id` is nulled)
+
+Tasks — the things you actually do, optionally attached to a project:
+
+- `POST /tasks` — create a task
+- `GET /tasks?project_id=&status=&due_before=&limit=` — list / filter tasks
+- `GET /tasks/{id}` — read one
+- `PATCH /tasks/{id}` — update fields; moving `status` to `done` stamps `completed_at`,
+  moving it away clears `completed_at`
+- `DELETE /tasks/{id}` — delete
+
+Planner — the ranked "what to do next" list, deterministic and pure-SQL (no LLM):
+
+- `GET /planner/today?limit=` — overdue + due-today first, then by priority, then oldest first
+- `GET /planner/upcoming?days=&limit=` — same ranking over the next N days (default 7)
 
 ## Configure your API key(s)
 

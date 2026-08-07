@@ -59,6 +59,34 @@ talk to, and the first real Jarvis interface:
   both volumes; its `ApiError` distinguishes 503 (not configured yet) from 404 and from status 0
   (API not running), so the UI can say "add your API key" instead of "something broke".
 
+Day 4 (Projects + Planner volume) complete — the Home screen's Today, Projects and Suggestions
+panels are now backed by real data instead of hardcoded mockups:
+
+- **Projects CRUD** (`apps/api/app/projects/`) — `projects` table (id, name, description, status,
+  timestamps). `POST /projects` creates one, `GET /projects` lists them with an optional
+  `status` filter, `GET /projects/{pid}` reads one, `PATCH /projects/{pid}` updates name /
+  description / status, `DELETE /projects/{pid}` removes it. Statuses are `active`, `paused`,
+  `done`, `archived`.
+- **Tasks CRUD** (`apps/api/app/tasks/`) — `tasks` table with optional `project_id` FK
+  (nullable, ON DELETE SET NULL — deleting a project doesn't delete its tasks), plus title,
+  notes, status (`todo`/`doing`/`done`), priority (0..3), `due_at`, `completed_at` and
+  timestamps. Full CRUD under `/tasks`, with `GET /tasks` filterable by `project_id`, `status`,
+  `due_before` and a `limit`.
+- **Planner** (`apps/api/app/planner/`) — `GET /planner/today` returns the ranked "what to do
+  next" list: overdue + due-today tasks first, then priority, then oldest-created; capped at
+  `limit` (default 10). Pure SQL, no LLM. `GET /planner/upcoming` extends the horizon by
+  `days` (default 7) for planning ahead.
+- **Real `/projects` page** (`apps/web/src/app/projects/`) — lists projects with status chips,
+  a create form, inline status transitions and delete. Talks to the API through
+  `apps/web/src/lib/api.ts` (the typed client is extended with `projects` and `tasks`
+  namespaces).
+- **Real `/planner` page** (`apps/web/src/app/planner/`) — renders the ranked Today list with
+  due-date badges (overdue in red, due-today amber), a "mark done" action that flips the task
+  to `status=done` (which stamps `completed_at`), and a project-name label per task.
+- **Home screen wired to real data** — Today, Projects and Suggestions now fetch from the
+  Planner and Projects endpoints on mount; the placeholder arrays are gone. Quick-action cards
+  still route to `/chat`, `/projects` and `/planner`.
+
 ## Decisions log
 
 - Multi-agent build pipeline designed for per-volume work (build → review/vuln/security →
@@ -120,15 +148,42 @@ talk to, and the first real Jarvis interface:
   vault (currently orphaned forever); wikilink title collisions across folders (resolves to
   whichever is found first); and automatic memory extraction (today `/memory/extract` is only
   ever called on demand, never at the end of a conversation).
+- **Project attribution to notes stays weak for now** — a note is considered "in project X"
+  when a `scope="project"` memory with `project=X` matches it by name, not via a real FK on
+  `notes`. This keeps ingestion cheap (no schema change on every project rename) and lets
+  Obsidian stay the source of truth. Real `Note.project_id` (or a `note_projects` join table)
+  is deferred to a later day, likely when Content Studio needs firm attribution.
+- **`Task.completed_at` is stamped on `status=done` and cleared when the task moves away.**
+  The DB row itself is the audit trail — no separate `task_events` table for the MVP. If we
+  later need reopen counts or per-transition timing, we add the event log then.
+- **Planner ranking is deterministic and pure-DB** — one SQL query orders by (overdue/today
+  first, then priority DESC, then created_at ASC), no LLM call in the hot path. Works offline,
+  doesn't burn provider budget, and stays fast enough that the Home screen can refetch it on
+  every mount. An LLM-scored "what should I actually do next" pass can layer on top later
+  without touching the base ranking.
+- **Post-pipeline security hardening (Day 4)**: capped every list endpoint's `limit` at ≤500 and
+  added a default cap on `/projects` (it had none), plus `max_length` on every user-supplied
+  string field (Project.name/description, Task.title/description). No functional change; just
+  bounds the blast radius of a bad client. Deferred: the security review flagged that asyncpg
+  silently strips timezone info off `Task.due_at`/`completed_at` because the Postgres columns
+  are `TIMESTAMP WITHOUT TIME ZONE` — the code writes naive UTC everywhere on the write path
+  (fixed during Day 4 for `completed_at`), but if we ever expose a public API where clients
+  send arbitrary tz-aware datetimes we should either switch the columns to `TIMESTAMPTZ` or
+  document the coercion. Not a bug for MVP; note for later.
 
 ## Next step
 
-**First, add your `ANTHROPIC_API_KEY` to `.env` and restart the API** — Day 3 is built and
-wired but chat stays at 503 until that lands. Then take a real conversation end to end and
-run `POST /memory/extract` on it to see the memory loop close.
+**First, add your `LLM_API_KEY` to `.env` and restart the API** — Day 3 is built and wired
+but chat stays at 503 until that lands. Then take a real conversation end to end and run
+`POST /memory/extract` on it to see the memory loop close.
 
-Day 4: the Projects + Planner volume. The Home screen's Today, Suggestions and Projects panels
-are currently hardcoded — this is the volume that makes them real: projects and tasks in
-Postgres, endpoints to create/list/complete them, project-scoped memories tied to a project
-(the `scope="project"` layer already exists and is unused), and the `/knowledge` search wired
-into the ⌘K field so the whole shell stops being a mockup.
+Day 5, pick one:
+
+- **Content Studio** — turn a project + its notes + the conversation history into drafts
+  (docs, emails, review decks). The assistant-card actions ("Build the review deck",
+  "Draft the client email") get real endpoints behind them, and note→project attribution
+  finally gets promoted to a real FK.
+- **Voice** — the top-bar voice button becomes real: mic capture, STT into the chat pipeline,
+  TTS on the reply. Same chat/memory/knowledge loop, new I/O surface.
+- **Add real notes to the vault and dogfood** — no new volume; instead, live in Jarvis for a
+  few days, capture actual friction, and let the next volume choice fall out of what breaks.
