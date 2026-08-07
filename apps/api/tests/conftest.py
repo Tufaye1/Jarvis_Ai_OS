@@ -11,6 +11,7 @@ from app.db import async_session, engine
 from app.knowledge.models import Note, NoteLink
 from app.memory.models import Memory
 from app.projects.models import Project
+from app.research.models import ResearchQuery
 from app.tasks.models import Task
 
 
@@ -147,6 +148,25 @@ async def cleanup_content():
         return
     async with async_session() as session:
         await session.execute(delete(ContentDraft).where(ContentDraft.id.in_(content_ids)))
+        await session.commit()
+
+
+@pytest.fixture
+async def cleanup_research():
+    """Yield a list; append the id of any ResearchQuery a test creates.
+
+    After the test, deletes those ResearchQuery rows. ResearchQuery.project_id
+    and ResearchQuery.saved_as_note_id are both ON DELETE SET NULL, so
+    ordering against `cleanup_projects` / `cleanup_notes` does not matter.
+    """
+    research_ids: list[int] = []
+    yield research_ids
+    if not research_ids:
+        return
+    async with async_session() as session:
+        await session.execute(
+            delete(ResearchQuery).where(ResearchQuery.id.in_(research_ids))
+        )
         await session.commit()
 
 

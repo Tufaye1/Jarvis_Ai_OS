@@ -13,6 +13,7 @@ from app.knowledge.search_router import router as knowledge_search_router
 from app.memory.router import router as memory_router
 from app.planner.router import router as planner_router
 from app.projects.router import router as projects_router
+from app.research.router import router as research_router
 from app.tasks.router import router as tasks_router
 
 
@@ -39,6 +40,7 @@ app.include_router(projects_router)
 app.include_router(tasks_router)
 app.include_router(planner_router)
 app.include_router(content_router)
+app.include_router(research_router)
 
 
 @app.get("/health")

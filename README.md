@@ -11,11 +11,12 @@ and does tasks on your behalf.
 ## Stack
 
 - `apps/api` — FastAPI backend (Python, managed with `uv`). Exposes `/health` plus the
-  Knowledge, Chat, Memory, Projects, Tasks, Planner and Content volumes (see Endpoints
-  below).
+  Knowledge, Chat, Memory, Projects, Tasks, Planner, Content and Research volumes (see
+  Endpoints below).
 - `apps/web` — Next.js frontend. The Jarvis shell (top bar + sidebar) with a Home screen
   (wired to real Planner + Projects data), a Knowledge control panel, a Chat screen,
-  Projects and Planner pages, and a Content Studio (`/content`) page.
+  Projects and Planner pages, a Content Studio (`/content`) page, and a Research
+  (`/research`) page with source chips, save-to-vault and generate-content-from-research.
 - `vault/` — your Obsidian vault (gitignored — personal notes never get pushed)
 - Postgres + `pgvector` — one database for structured data and vector search (via Docker Compose)
 
@@ -76,6 +77,22 @@ same semantic search + memory recall as chat:
 - `GET /content/{id}` — read one
 - `PATCH /content/{id}` — edit the draft (title, body, tone, length, kind)
 - `DELETE /content/{id}` — delete a draft
+
+Research — synthesize an answer from your vault (web adapter coming later), grounded
+via the same semantic search + memory recall as chat, with `sources` in the same shape:
+
+- `POST /research` — run a query, get a synthesized answer with sources. Vault-only for
+  the MVP; the internal `Retriever` interface is pluggable so a web backend is a one-file
+  add.
+- `GET /research` — list research runs, newest first
+- `GET /research/{id}` — read one
+- `DELETE /research/{id}` — delete a run
+- `POST /research/{id}/save-to-vault` — write the research as a real markdown note under
+  `vault/Research/` so the next reindex makes it semantically retrievable (past research
+  feeds future research)
+- `POST /research/{id}/to-content` — hand the research answer + sources to
+  `POST /content/generate` as the brief, so a research run turns into a LinkedIn post /
+  blog / email / deck outline without retyping
 
 ## Configure your API key(s)
 

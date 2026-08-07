@@ -21,6 +21,7 @@ _MODEL_MODULES = (
     "app.projects.models",
     "app.tasks.models",
     "app.content.models",
+    "app.research.models",
 )
 
 

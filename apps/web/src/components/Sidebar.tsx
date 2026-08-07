@@ -70,6 +70,7 @@ const NAV: NavItem[] = [
   },
   {
     label: "Research",
+    href: "/research",
     icon: (
       <svg {...iconProps}>
         <circle cx="8" cy="8" r="5.4" />

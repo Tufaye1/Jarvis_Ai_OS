@@ -42,7 +42,7 @@ const QUICK_ACTIONS = [
     subtitle: "Web + your files, with sources",
     bg: "#DCEFD9",
     fg: "#4A5A48",
-    href: undefined,
+    href: "/research",
     icon: (
       <>
         <circle cx="8" cy="8" r="5.4" />

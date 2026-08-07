@@ -28,6 +28,15 @@ export default function RevealText({
   onTick?: () => void;
 }) {
   const [revealed, setRevealed] = useState(animate ? 0 : text.length);
+
+  // Reset the reveal cursor whenever the parent switches to a different
+  // text (or toggles animate). Without this, callers must remount the
+  // component via key={id} to avoid stale internal state — every callsite
+  // would have to remember that. Keep the invariant here, not out there.
+  useEffect(() => {
+    setRevealed(animate ? 0 : text.length);
+  }, [text, animate]);
+
   const done = revealed >= text.length;
 
   useEffect(() => {

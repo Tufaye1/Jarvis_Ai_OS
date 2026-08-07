@@ -476,3 +476,68 @@ export function updateContent(
 export function deleteContent(id: number): Promise<void> {
   return request<void>(`/content/${id}`, { method: "DELETE" });
 }
+
+/* ------------------------------------------------------------- research --- */
+
+export type ResearchStatus = "pending" | "ready" | "failed";
+
+export interface ResearchQuery {
+  id: number;
+  query: string;
+  summary: string | null;
+  status: ResearchStatus;
+  sources: Source[] | null;
+  project_id: number | null;
+  saved_as_note_id: number | null;
+  model: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ResearchQueryRequest {
+  query: string;
+  project_id?: number | null;
+  save_to_vault?: boolean;
+}
+
+export function listResearch(params?: {
+  project_id?: number;
+  status?: ResearchStatus;
+  limit?: number;
+}): Promise<ResearchQuery[]> {
+  const query = new URLSearchParams();
+  if (params?.project_id !== undefined)
+    query.set("project_id", String(params.project_id));
+  if (params?.status) query.set("status", params.status);
+  if (params?.limit !== undefined) query.set("limit", String(params.limit));
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return request<ResearchQuery[]>(`/research${suffix}`, { cache: "no-store" });
+}
+
+export function getResearch(id: number): Promise<ResearchQuery> {
+  return request<ResearchQuery>(`/research/${id}`, { cache: "no-store" });
+}
+
+export function createResearch(
+  payload: ResearchQueryRequest,
+): Promise<ResearchQuery> {
+  return request<ResearchQuery>("/research/query", {
+    method: "POST",
+    body: JSON.stringify({
+      query: payload.query,
+      project_id: payload.project_id ?? null,
+      save_to_vault: payload.save_to_vault ?? false,
+    }),
+  });
+}
+
+export function deleteResearch(id: number): Promise<void> {
+  return request<void>(`/research/${id}`, { method: "DELETE" });
+}
+
+export function saveResearchToVault(id: number): Promise<ResearchQuery> {
+  return request<ResearchQuery>(`/research/${id}/save-to-vault`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}

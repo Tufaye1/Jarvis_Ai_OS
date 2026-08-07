@@ -115,6 +115,33 @@ the conversation history into an actual draft, not just chat about one:
   "Draft the client email" now call `POST /content/generate` (with kind `deck_outline` and
   `email` respectively) and take you to the resulting draft.
 
+Day 6 (Research volume) complete — the "Research this further" assistant action and the
+Research sidebar entry are now real, and research output feeds back into the vault:
+
+- **Research backend** (`apps/api/app/research/`) — `POST /research` runs a query through the
+  Knowledge volume's `semantic_search` (limit **12** — Research needs breadth over focus),
+  recalls memories, and calls the same multi-provider failover LLM (`app/chat/llm.py`) with
+  a research-oriented system prompt. Returns a synthesized answer plus `sources` in the same
+  JSONB shape chat/content use, so the citation-chip UI works unchanged. Vault-only for the
+  MVP; the internal `Retriever` interface is designed pluggable so a web adapter is a
+  one-file add.
+- **Save-to-vault** — `POST /research/{id}/save-to-vault` writes a real markdown note under
+  `vault/Research/` (title + query + rendered answer + a `## Sources` section with wikilinks
+  back to cited notes). The next `POST /knowledge/reindex` picks it up, embeds it, and it
+  becomes semantically retrievable — closing the loop where past research feeds future
+  research.
+- **Generate content from research** — `POST /research/{id}/to-content` hands the research
+  answer + its sources straight to `POST /content/generate` as the brief, so a research run
+  can turn into a LinkedIn post / blog / email / deck outline without retyping.
+- **CRUD** — `GET /research` (newest first), `GET /research/{id}`, `DELETE /research/{id}`.
+- **`/research` page** (`apps/web/src/app/research/`) — query box, source-chip reveal on the
+  answer (same component as chat/content), buttons for "Save to vault" and "Generate
+  content from this", and a saved-research list. Typed client extended with a `research`
+  namespace in `apps/web/src/lib/api.ts`.
+- **Wired entry points** — Home quick-action "Research", the Sidebar "Research" nav item,
+  and the previously-inert assistant-card "Research this further" action all route to
+  `/research` (the assistant-card action pre-fills the query from the surrounding message).
+
 ## Decisions log
 
 - Multi-agent build pipeline designed for per-volume work (build → review/vuln/security →
@@ -214,19 +241,51 @@ the conversation history into an actual draft, not just chat about one:
   the frontend's existing citation-chip component renders both without a translation layer.
   Grounding is done via the same `semantic_search` + `memory.recall()` pair chat uses — one
   code path for "get context for the LLM", not two.
+- **Research is deliberately synchronous, not queued.** `POST /research` runs the retriever
+  + LLM in-band and returns the finished row, matching how chat and Content Studio work.
+  Introducing a queue (Celery / Arq / etc.) buys nothing for the current single-user,
+  seconds-long round trips, and it would add a worker process, a broker, and a whole
+  status/polling surface on the frontend. Deferred until we actually have long-running
+  background work (multi-source web crawls, batch content generation, or scheduled
+  research runs) — at which point the same queue will serve all three volumes, not
+  Research alone.
+- **Save-to-vault writes a real markdown note under `vault/Research/`.** The alternative was
+  storing research answers only in the `research` table, but then a research run couldn't
+  ever surface in Obsidian, in `semantic_search`, or as chat/content grounding. Writing an
+  actual note keeps Obsidian the source of truth (per the Day 2 rule) and makes the
+  research corpus itself semantically retrievable after the next reindex — so past research
+  automatically feeds future research and future content drafts.
+- **Retrieval limit is 12 for Research (vs 5 for chat).** Chat needs a tight, on-topic
+  context window so the reply stays focused and stays inside the token budget of a
+  free-tier provider. Research is the opposite job: it should look widely across the vault
+  and cite more sources, even at the cost of some noise, so it can synthesize instead of
+  paraphrase. The number lives next to the Research service (not in a shared config) so
+  future volumes can pick their own breadth without stepping on chat.
+- **Web search adapter (Tavily / Brave / DuckDuckGo) deferred to a follow-up commit.**
+  Research is vault-only for the MVP. The service takes an internal `Retriever` interface
+  (`retrieve(query, limit) -> list[Source]`), and today's only implementation wraps
+  `semantic_search`. Adding a web backend is a one-file drop: a new `WebRetriever` that
+  calls the chosen API, normalizes results into the same `Source` shape (title, snippet,
+  url/vault_path, score), and gets composed with the vault retriever. No API contract or
+  frontend change needed when it lands.
 
 ## Next step
 
-Day 6, pick one:
+Day 7, pick one:
 
-- **Voice** — the top-bar voice button becomes real: mic capture, STT into the chat and
-  Content Studio pipelines, TTS on the reply. Same chat/memory/knowledge/content loop, new
-  I/O surface.
-- **Dogfood more** — no new volume; instead, live in Jarvis for a few days now that chat,
-  memory, projects, planner and content are all real, capture actual friction, and let the
-  next volume choice fall out of what breaks.
-- **Deferred vault-cleanup bug fix** — when a note's file is deleted from the vault its DB
-  row is still orphaned forever (and still surfaced by semantic search + still cited by
-  chat and content drafts). `POST /knowledge/reindex` should tombstone or delete missing
-  notes and cascade to `note_links` / stale embeddings. Small, self-contained, high value
-  now that content drafts pull grounding from notes.
+- **Web search adapter for Research** — plug a `WebRetriever` (Tavily / Brave /
+  DuckDuckGo) into the existing `Retriever` interface, so `/research` can cite the open
+  web alongside the vault. Smallest, most obviously-useful next volume because the
+  interface is already there.
+- **Voice** — the top-bar voice button becomes real: mic capture, STT into the chat,
+  content and research pipelines, TTS on the reply. Same chat/memory/knowledge/content/
+  research loop, new I/O surface.
+- **Browser Agent** — the sidebar's inert "Browser" entry becomes real: a Playwright-
+  driven agent that can open pages, extract structured data, and file the results into a
+  research row (which can then be saved to the vault). Biggest scope of the three; also
+  the biggest reach — unblocks "go find X and summarize it" without a search API.
+- **Deferred vault-cleanup bug fix** — when a note's file is deleted from the vault its
+  DB row is still orphaned forever (and still surfaced by semantic search + still cited
+  by chat, content and now research). `POST /knowledge/reindex` should tombstone or
+  delete missing notes and cascade to `note_links` / stale embeddings. Small,
+  self-contained, higher value now that research writes new notes into the vault.

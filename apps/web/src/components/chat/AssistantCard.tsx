@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import {
+  createResearch,
   generateContent,
   isApiError,
   type ContentDraft,
   type ContentKind,
+  type ResearchQuery,
   type Source,
 } from "@/lib/api";
 
@@ -19,13 +21,21 @@ const REVEAL_TICK_MS = 20;
 /** The four pastel tints, cycled across source chips. */
 const TINTS = ["#D8E8F6", "#DCEFD9", "#FBF0C4", "#E9E0F7"];
 
-/** Label + optional Content Studio kind. Kinds route to `generateContent`;
- *  labels with no kind stay inert with a "Not wired up yet" tooltip. */
-const ACTIONS: { label: string; kind: ContentKind | null }[] = [
-  { label: "Save to memory", kind: null },
-  { label: "Build the review deck", kind: "deck_outline" },
-  { label: "Draft the client email", kind: "email" },
-  { label: "Research this further", kind: null },
+/** Every action card button. Three shapes, discriminated on `type`:
+ *  - `content` routes to `generateContent` (Content Studio volume).
+ *  - `research` routes to `createResearch` (Research volume).
+ *  - `inert` stays inert with a "Not wired up yet" tooltip.
+ */
+type Action =
+  | { type: "content"; label: string; kind: ContentKind }
+  | { type: "research"; label: string }
+  | { type: "inert"; label: string };
+
+const ACTIONS: Action[] = [
+  { type: "inert", label: "Save to memory" },
+  { type: "content", label: "Build the review deck", kind: "deck_outline" },
+  { type: "content", label: "Draft the client email", kind: "email" },
+  { type: "research", label: "Research this further" },
 ];
 
 /** Human-readable label for the success pill, per kind. */
@@ -100,6 +110,7 @@ export function JarvisMark() {
 
 type ActionResult =
   | { kind: "success"; draft: ContentDraft }
+  | { kind: "research-success"; research: ResearchQuery }
   | { kind: "error"; message: string };
 
 export default function AssistantCard({
@@ -142,6 +153,23 @@ export default function AssistantCard({
         source_conversation_id: conversationId as number,
       });
       setResult({ kind: "success", draft });
+    } catch (error) {
+      setResult({ kind: "error", message: errorDetail(error) });
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const runResearch = async () => {
+    if (pending || !wireable) return;
+    setPending(true);
+    setResult(null);
+    try {
+      const research = await createResearch({
+        query: userPrompt as string,
+        project_id: null,
+      });
+      setResult({ kind: "research-success", research });
     } catch (error) {
       setResult({ kind: "error", message: errorDetail(error) });
     } finally {
@@ -243,6 +271,22 @@ export default function AssistantCard({
             </div>
           )}
 
+          {result?.kind === "research-success" && (
+            <div className="mb-[10px] inline-flex items-center gap-[8px] rounded-nav bg-[#E7F1E5] px-[11px] py-[6px] text-[12px] font-semibold text-ink">
+              <span
+                aria-hidden
+                className="h-[6px] w-[6px] rounded-full bg-[#3F8F45]"
+              />
+              <span>Research saved</span>
+              <Link
+                href="/research"
+                className="text-ink-secondary underline underline-offset-2 hover:text-ink"
+              >
+                → /research/{result.research.id}
+              </Link>
+            </div>
+          )}
+
           {result?.kind === "error" && (
             <div className="mb-[10px] inline-flex items-center gap-[8px] rounded-nav bg-[#FBEDE5] px-[11px] py-[6px] text-[12px] font-semibold text-ink">
               <span
@@ -277,7 +321,7 @@ export default function AssistantCard({
                 const disabledCls =
                   " disabled:cursor-not-allowed disabled:opacity-60";
 
-                if (action.kind === null) {
+                if (action.type === "inert") {
                   return (
                     <button
                       key={action.label}
@@ -291,11 +335,15 @@ export default function AssistantCard({
                 }
 
                 const disabled = !wireable;
+                const onClick =
+                  action.type === "research"
+                    ? () => void runResearch()
+                    : () => void runAction(action.kind);
                 return (
                   <button
                     key={action.label}
                     type="button"
-                    onClick={() => void runAction(action.kind as ContentKind)}
+                    onClick={onClick}
                     disabled={disabled}
                     title={
                       disabled
