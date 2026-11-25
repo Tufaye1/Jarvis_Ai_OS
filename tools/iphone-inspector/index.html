@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>iPhone 17 Pro Inspector</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one narrow operating column (phone-first, used standing at a seller's table), sticky verdict bar, sections in the order you actually inspect. */
+:root{
+  --bg:#EFEFED; --card:#FFFFFF; --sunk:#F7F7F4; --line:#E2E2DC;
+  --ink:#101010; --ink2:#56564F; --ink3:#8A8A84;
+  --accent:#1F4FD1; --accent-ink:#FFFFFF;
+  --ok:#17803D; --ok-bg:#E5F3EA; --warn:#A35F00; --warn-bg:#FBEFD9; --bad:#C2261B; --bad-bg:#FBE4E1;
+  --f-display:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;
+  --f-body:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121212; --card:#1B1B1A; --sunk:#222220; --line:#2F2F2C;
+  --ink:#F2F2EE; --ink2:#B5B5AE; --ink3:#85857F;
+  --accent:#7C9BFF; --accent-ink:#0B0B0B;
+  --ok:#5CCB80; --ok-bg:#16301F; --warn:#F0B34F; --warn-bg:#33270F; --bad:#FF7A6E; --bad-bg:#3A1714; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121212; --card:#1B1B1A; --sunk:#222220; --line:#2F2F2C;
+  --ink:#F2F2EE; --ink2:#B5B5AE; --ink3:#85857F;
+  --accent:#7C9BFF; --accent-ink:#0B0B0B;
+  --ok:#5CCB80; --ok-bg:#16301F; --warn:#F0B34F; --warn-bg:#33270F; --bad:#FF7A6E; --bad-bg:#3A1714; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--card)}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 80px;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0}
+h1{font-size:1.75rem;letter-spacing:-.01em}
+h2{font-size:1.2rem}
+h3{font-size:1rem}
+p{margin:0}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);font-weight:600}
+.muted{color:var(--ink2)}
+.small{font-size:.85rem}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.warnbox{background:var(--warn-bg);color:var(--ink);border-radius:10px;padding:12px 14px;font-size:.9rem}
+.warnbox b{color:var(--warn)}
+/* sticky bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.bar-in{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 12px;font-weight:600;font-size:.85rem;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.idle{background:var(--sunk);color:var(--ink2)}
+.prog{flex:1;min-width:120px;height:6px;background:var(--sunk);border-radius:6px;overflow:hidden}
+.prog>i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+/* controls */
+.seg{display:inline-flex;background:var(--sunk);border-radius:10px;padding:3px;gap:3px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;color:var(--ink2);font:600 .9rem var(--f-body);padding:7px 12px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 .9rem var(--f-body);padding:9px 14px;border-radius:10px;cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--ink2);font-weight:500;min-width:0}
+input[type=text],textarea{width:100%;font:500 .95rem var(--f-mono);color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:9px;padding:9px 10px}
+textarea{font-family:var(--f-body);min-height:70px;resize:vertical}
+.chk{font-size:.8rem;font-weight:600;min-height:1.2em}
+.chk.ok{color:var(--ok)} .chk.bad{color:var(--bad)} .chk.warn{color:var(--warn)}
+/* checklist */
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.item{border-top:1px solid var(--line);padding-top:12px;display:grid;grid-template-columns:1fr auto;gap:6px 12px}
+.item:first-of-type{border-top:0;padding-top:0}
+.item .t{font-weight:600;min-width:0}
+.item .how{grid-column:1/-1;font-size:.87rem;color:var(--ink2)}
+.item .flag{grid-column:1/-1;font-size:.82rem;color:var(--bad)}
+.item .flag::before{content:"Red flag: ";font-weight:700}
+.tag{font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:2px}
+.tag.deal{background:var(--bad-bg);color:var(--bad)} .tag.neg{background:var(--warn-bg);color:var(--warn)}
+.tri{display:inline-flex;gap:4px;align-self:start}
+.tri button{border:1px solid var(--line);background:var(--card);color:var(--ink2);font:700 .78rem var(--f-body);padding:6px 9px;border-radius:8px;cursor:pointer;min-width:44px}
+.tri button[data-v="pass"][aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.tri button[data-v="fail"][aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.tri button[data-v="na"][aria-pressed="true"]{background:var(--ink2);border-color:var(--ink2);color:var(--card)}
+.conf{font-size:.72rem;color:var(--ink3);font-style:italic}
+/* fingerprint table */
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.87rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)}
+td.r-ok{color:var(--ok);font-weight:700} td.r-bad{color:var(--bad);font-weight:700} td.r-warn{color:var(--warn);font-weight:700}
+/* touch grid + pixel overlay */
+#touchGrid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;touch-action:none;user-select:none;-webkit-user-select:none;max-width:100%}
+#touchGrid div{aspect-ratio:1;background:var(--sunk);border-radius:3px}
+#touchGrid div.hit{background:var(--ok)}
+#overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 18px);cursor:pointer}
+#overlay span{font:600 .8rem var(--f-body);background:rgba(0,0,0,.55);color:#fff;padding:6px 12px;border-radius:99px}
+pre#report{white-space:pre-wrap;word-break:break-word;background:var(--sunk);border-radius:10px;padding:14px;font:.82rem/1.55 var(--f-mono);margin:0;max-height:420px;overflow:auto}
+a{color:var(--accent)}
+@media (max-width:520px){.item{grid-template-columns:1fr}.bar-title{display:none}.bar-in{flex-wrap:nowrap}.prog{min-width:60px}}
+@media (prefers-reduced-motion:reduce){.prog>i{transition:none}}
+</style>
+
+<div class="bar"><div class="bar-in">
+  <strong class="bar-title" style="font-family:var(--f-display)">Inspector</strong>
+  <span id="verdict" class="pill idle">Not started</span>
+  <div class="prog" aria-label="Checklist progress"><i id="progFill"></i></div>
+  <span id="progTxt" class="small muted mono">0/0</span>
+</div></div>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <span class="eyebrow">Pre-owned purchase check</span>
+    <h1>iPhone 17 Pro / Pro Max Inspector</h1>
+    <p class="muted">Work top to bottom with the seller present. Any red <b>Deal-breaker</b> failure means walk away. <b>Negotiate</b> failures mean the phone is real but worth less.</p>
+    <div class="row">
+      <span class="small muted">Model being inspected:</span>
+      <div class="seg" id="modelSeg">
+        <button type="button" data-m="pro" aria-pressed="true">17 Pro</button>
+        <button type="button" data-m="max" aria-pressed="false">17 Pro Max</button>
+      </div>
+    </div>
+    <div class="warnbox"><b>Limits of this tool.</b> No website or app outside Apple can read the phone's hardware serials or prove authenticity by itself. The strongest proofs are: Apple's own coverage page accepting the serial, the phone being recognised by a Mac/PC (Finder or Apple Devices), <i>Parts and Service History</i> in Settings, and a clean erase + setup with no Activation Lock. This tool organises those checks and catches mismatches. Your eyes still do the work.</div>
+  </header>
+
+  <!-- 1. IDENTITY -->
+  <section class="card" id="identity">
+    <div class="sec-head"><h2>1 · Identity cross-check</h2><span class="eyebrow">Numbers must match everywhere</span></div>
+    <p class="small muted">Type each number from where it was read. IMEIs are checked with the Luhn checksum; a typo or a forged number usually fails it. Then every source is compared.</p>
+    <div class="grid2">
+      <label class="f">IMEI from dialing <span class="mono">*#06#</span><input type="text" id="imeiDial" inputmode="numeric" autocomplete="off"><span class="chk" id="c-imeiDial"></span></label>
+      <label class="f">IMEI in Settings › General › About<input type="text" id="imeiSet" inputmode="numeric" autocomplete="off"><span class="chk" id="c-imeiSet"></span></label>
+      <label class="f">IMEI on box label<input type="text" id="imeiBox" inputmode="numeric" autocomplete="off"><span class="chk" id="c-imeiBox"></span></label>
+      <label class="f">IMEI on SIM tray (skip if eSIM-only)<input type="text" id="imeiTray" inputmode="numeric" autocomplete="off"><span class="chk" id="c-imeiTray"></span></label>
+      <label class="f">IMEI2 (Settings, second line)<input type="text" id="imei2" inputmode="numeric" autocomplete="off"><span class="chk" id="c-imei2"></span></label>
+      <label class="f">IMEI on seller's receipt / invoice<input type="text" id="imeiRcpt" inputmode="numeric" autocomplete="off"><span class="chk" id="c-imeiRcpt"></span></label>
+      <label class="f">Serial in Settings<input type="text" id="serSet" autocomplete="off" style="text-transform:uppercase"><span class="chk" id="c-serSet"></span></label>
+      <label class="f">Serial on box<input type="text" id="serBox" autocomplete="off" style="text-transform:uppercase"><span class="chk" id="c-serBox"></span></label>
+      <label class="f">Model Number in Settings (e.g. MXXX3LL/A)<input type="text" id="partNo" autocomplete="off" style="text-transform:uppercase"><span class="chk" id="c-partNo"></span></label>
+      <label class="f">Model Name shown in Settings › About<input type="text" id="modelName" autocomplete="off" placeholder="iPhone 17 Pro"><span class="chk" id="c-modelName"></span></label>
+    </div>
+    <div id="matchOut" class="small"></div>
+    <div class="row">
+      <a class="btn" href="https://checkcoverage.apple.com/" target="_blank" rel="noopener">Open Apple Check Coverage ↗</a>
+      <span class="small muted">Paste the Settings serial there. It must show the same model name and a plausible purchase date. "Serial not valid" = walk away.</span>
+    </div>
+  </section>
+
+  <!-- 2. CHECKLIST (rendered) -->
+  <div id="checklist" style="display:flex;flex-direction:column;gap:20px"></div>
+
+  <!-- 3. ON-DEVICE -->
+  <section class="card" id="ondevice">
+    <div class="sec-head"><h2>On-device browser tests</h2><span class="eyebrow">Open this page on the phone being inspected</span></div>
+    <p class="small muted">These only mean something when this page is opened in Safari <i>on the phone you are buying</i>. A clone running Android usually gives itself away here, though a determined faker can spoof some values. Treat a mismatch as a strong warning, a match as supporting evidence only.</p>
+    <div class="row"><button class="btn primary" type="button" id="runFp">Run device fingerprint</button></div>
+    <div class="tbl"><table id="fpTable" hidden><thead><tr><th>Signal</th><th>Read</th><th>Expected</th><th>Result</th></tr></thead><tbody></tbody></table></div>
+    <p class="small muted">If Settings › Display &amp; Brightness › Display Zoom is set to <i>Larger Text</i>, the point sizes will be smaller than expected. Switch to <i>Default</i> and re-run.</p>
+
+    <h3>Touch grid</h3>
+    <p class="small muted">Drag one finger over every square. All squares should turn green with no dead zones. Squares that light up without being touched mean ghost touches.</p>
+    <div id="touchGrid" aria-label="Touch test grid"></div>
+    <div class="row"><span id="touchTxt" class="small mono muted">0 / 0</span><button class="btn" type="button" id="touchReset">Reset grid</button></div>
+
+    <h3>Dead pixel &amp; tint screens</h3>
+    <p class="small muted">Shows full-screen colours. Look closely for stuck dots, yellow/pink tint, uneven brightness, or burned-in shapes (grey screen). Tap to move to the next colour.</p>
+    <div class="row"><button class="btn" type="button" id="pixBtn">Start colour screens</button></div>
+  </section>
+
+  <!-- 4. REPORT -->
+  <section class="card" id="reportCard">
+    <div class="sec-head"><h2>Report</h2><span class="eyebrow">Copy and keep</span></div>
+    <label class="f">Notes (price agreed, seller name, scratches, anything odd)<textarea id="notes"></textarea></label>
+    <div class="row">
+      <button class="btn primary" type="button" id="copyRep">Copy report</button>
+      <button class="btn" type="button" id="resetAll">Reset this model</button>
+      <span id="copyMsg" class="small muted"></span>
+    </div>
+    <div id="resetConfirm" class="warnbox" hidden>Clear every answer for this model? <button class="btn" type="button" id="resetYes">Yes, clear</button> <button class="btn" type="button" id="resetNo">Cancel</button></div>
+    <pre id="report"></pre>
+  </section>
+
+  <p class="small muted">Spec values marked <span class="conf">likely</span> come from memory of Apple's published specs and should be confirmed on apple.com before you rely on them. Checks were written for iOS 26. Apple can move menus between iOS versions.</p>
+</div>
+<div id="overlay" hidden><span id="ovTxt">Tap for next colour</span></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- device expectations ---------- */
+const SPECS = {
+  pro: {name:"iPhone 17 Pro", ptW:402, ptH:874, dpr:3, display:'6.3" 2622×1206', storage:"256 GB, 512 GB, 1 TB"},
+  max: {name:"iPhone 17 Pro Max", ptW:440, ptH:956, dpr:3, display:'6.9" 2868×1320', storage:"256 GB, 512 GB, 1 TB, 2 TB"}
+};
+
+/* ---------- checklist data ----------
+   sev: deal = walk away on fail, neg = negotiate on fail
+   conf: certain | likely  (how sure we are the menu/behaviour is exactly as described) */
+const SECTIONS = [
+ {id:"before", title:"2 · Before you meet", sub:"Do this remotely", items:[
+  {id:"b1",sev:"deal",t:"Seller sends the serial number; Apple Check Coverage accepts it",how:"Ask for a screenshot of Settings › General › About. Enter the serial at checkcoverage.apple.com. Model must read iPhone 17 Pro / Pro Max.",flag:"Serial rejected, wrong model, or seller refuses to share the serial.",conf:"certain"},
+  {id:"b2",sev:"neg",t:"Original receipt or invoice available",how:"Name, date, store and IMEI on the invoice should line up with the phone and Check Coverage purchase date.",flag:"No proof of purchase on a phone this new. Raises stolen-device risk.",conf:"certain"},
+  {id:"b3",sev:"deal",t:"IMEI is not reported lost or stolen",how:"Check the IMEI with your carrier or your country's national device registry, if one exists. Third-party IMEI sites vary in accuracy.",flag:"Blacklisted or blocked IMEI. The phone can lose mobile service.",conf:"likely"},
+  {id:"b4",sev:"neg",t:"Price is believable",how:"Compare with recent sold listings for the same storage and condition.",flag:"Price far below market for a current-generation Pro. Usually a fake, locked, stolen or financed device.",conf:"certain"}
+ ]},
+ {id:"body", title:"3 · Physical inspection", sub:"Before turning it on", items:[
+  {id:"p1",sev:"deal",t:"Build matches a 17 Pro: aluminium body, full-width camera plateau on the back, Camera Control button on the right side",how:"Compare against Apple's photos for the exact colour. The 17 Pro family colours are Cosmic Orange, Deep Blue and Silver.",flag:"Different camera layout, missing Camera Control, wrong colour name, wobbly or hollow buttons.",conf:"likely"},
+  {id:"p2",sev:"neg",t:"Pentalobe screws at the USB-C port are clean",how:"Look closely at the two tiny screws next to the port. Scratched or chewed heads mean it has been opened.",flag:"Damaged screws or a gap between screen and frame, which suggests the phone was opened or the screen replaced.",conf:"certain"},
+  {id:"p3",sev:"neg",t:"No screen lift, gaps, dents or bent frame",how:"Lay it flat on a table and sight along each edge. Press lightly around the glass edges.",flag:"Glass lifts, creaks, or the phone rocks on a flat surface. Can mean a swollen battery.",conf:"certain"},
+  {id:"p4",sev:"neg",t:"Buttons click cleanly: volume, Action, side, Camera Control",how:"Camera Control should click, and respond to a light press and a swipe while the Camera app is open.",flag:"Mushy or dead button, Camera Control does not respond to swipe.",conf:"likely"},
+  {id:"p5",sev:"neg",t:"SIM tray liquid indicator is white or silver (tray models only)",how:"Eject the tray and shine a light into the slot. Mark N/A on eSIM-only models (e.g. US units).",flag:"Red or pink indicator means liquid contact. Apple denies warranty for it.",conf:"likely"},
+  {id:"p6",sev:"neg",t:"Box, if present, has a matching IMEI/serial label",how:"Covered in Identity above. A box is easy to fake, so a match does not prove much. A mismatch is still a red flag.",flag:"Box label does not match the phone.",conf:"certain"}
+ ]},
+ {id:"soft", title:"4 · Software identity", sub:"Settings, with the phone unlocked", items:[
+  {id:"s1",sev:"deal",t:"Mac or PC recognises it as an iPhone 17 Pro / Pro Max",how:"Plug it into a Mac (Finder) or Windows PC (Apple Devices app or iTunes) with a USB-C cable and tap Trust. The sidebar should show the phone, and the summary should show the model and serial.",flag:"Not recognised as an iPhone at all. This is the single best test against clones.",conf:"certain"},
+  {id:"s2",sev:"deal",t:"Settings › General › About shows the expected model, storage, serial and IMEI",how:"Tap Model Number to toggle between the part number and the A-number. Fill these into Identity above.",flag:"Model name or storage differs from the listing.",conf:"certain"},
+  {id:"s3",sev:"neg",t:"Parts and Service History shows no Unknown Part",how:"Settings › General › About › Parts and Service History. This section only appears if a part was replaced or repaired. Genuine Apple Part is acceptable if disclosed. Unknown Part is not.",flag:"Unknown Part on display, battery or camera. Means a non-Apple replacement.",conf:"likely"},
+  {id:"s4",sev:"neg",t:"Battery health and cycle count are reasonable",how:"Settings › Battery › Battery Health. Note Maximum Capacity, Cycle Count, Manufacture Date and First Use. A 2025 phone should be at roughly 90% or above with a few hundred cycles at most.",flag:"Capacity low for its age, \"Unknown Part\" or service message on the battery.",conf:"likely"},
+  {id:"s5",sev:"neg",t:"Real iOS features present: App Store, Siri, Apple Intelligence settings, Dynamic Island animations",how:"Open the App Store, start a timer and watch the Dynamic Island, long-press Control Center tiles. Settings › Accessibility › Motion should offer Limit Frame Rate (ProMotion models only).",flag:"Google Play Store, Android-style settings, laggy fake Dynamic Island.",conf:"likely"},
+  {id:"s6",sev:"neg",t:"Software Update works and iOS is current",how:"Settings › General › Software Update should connect and report the latest version.",flag:"Update screen fails to load or shows something non-Apple.",conf:"certain"},
+  {id:"s7",sev:"neg",t:"Carrier Lock says No SIM restrictions",how:"Settings › General › About › Carrier Lock (shown on recent iOS).",flag:"SIM locked to a carrier you do not use.",conf:"likely"}
+ ]},
+ {id:"lock", title:"5 · Ownership & locks", sub:"Most important section", items:[
+  {id:"l1",sev:"deal",t:"No device management profile",how:"Settings › General › VPN & Device Management should list nothing.",flag:"Any MDM profile. The phone may belong to a company.",conf:"certain"},
+  {id:"l2",sev:"deal",t:"Seller signs out of their Apple Account in front of you",how:"Settings › [their name] › Sign Out, entering their password. This turns off Find My and Activation Lock.",flag:"Seller \"forgot the password\" or says it will unlock later.",conf:"certain"},
+  {id:"l3",sev:"deal",t:"Erase All Content and Settings, done in front of you",how:"Settings › General › Transfer or Reset iPhone › Erase All Content and Settings.",flag:"Seller refuses to erase it in front of you.",conf:"certain"},
+  {id:"l4",sev:"deal",t:"Fresh setup reaches the Home Screen with no Activation Lock",how:"Go through setup yourself. You must never see \"iPhone Locked to Owner\" or a prompt for the previous Apple Account.",flag:"Activation Lock screen. The phone is unusable without the original owner.",conf:"certain"},
+  {id:"l5",sev:"deal",t:"No Remote Management screen during setup",how:"Watch the setup steps. A Remote Management screen means the device is enrolled in a company's management system.",flag:"Remote Management screen appears. Cannot be removed by the seller.",conf:"certain"},
+  {id:"l6",sev:"neg",t:"Your SIM or eSIM works: calls, SMS, mobile data",how:"Insert your SIM or transfer your eSIM, make a call, send a text, load a web page on mobile data with Wi-Fi off.",flag:"No service, \"SIM not supported\", or no network.",conf:"certain"}
+ ]},
+ {id:"func", title:"6 · Functional tests", sub:"After setup", items:[
+  {id:"f1",sev:"neg",t:"Face ID enrols and unlocks",how:"Settings › Face ID & Passcode › Set Up Face ID.",flag:"\"Face ID is not available\" or enrolment fails. Expensive repair.",conf:"certain"},
+  {id:"f2",sev:"neg",t:"Every rear lens works: 0.5×, 1×, 2×, 4×, 8×",how:"Camera app. Tap each zoom button, focus close and far, shoot photo and 4K video. Check for dust, spots or a shaking lens.",flag:"A zoom option missing, blurry lens, rattling or clicking camera, black image.",conf:"likely"},
+  {id:"f3",sev:"neg",t:"Front camera and flash work",how:"Selfie photo and video. Toggle the flash/torch.",flag:"Dark or blurry selfie camera, dead flash.",conf:"certain"},
+  {id:"f4",sev:"neg",t:"Speakers, earpiece and microphones",how:"Record a Voice Memo and play it back at full volume. Record a video with sound. Make a call holding it to your ear.",flag:"Crackling, muffled audio, or the other side cannot hear you.",conf:"certain"},
+  {id:"f5",sev:"neg",t:"Display: no dead pixels, tint, burn-in or touch dead zones",how:"Run the colour screens and touch grid below. Check True Tone and Auto-Brightness respond to light.",flag:"Stuck pixels, green/pink lines, yellow tint, ghost touches.",conf:"certain"},
+  {id:"f6",sev:"neg",t:"Proximity sensor turns the screen off during a call",how:"During a call, cover the top of the screen with your hand. The screen should go dark.",flag:"Screen stays on. Usually a sign of a bad display repair.",conf:"certain"},
+  {id:"f7",sev:"neg",t:"Haptics, Action button and vibration",how:"Assign the Action button to Silent Mode and toggle it. You should feel a crisp tap.",flag:"Buzzing rattle or no vibration.",conf:"certain"},
+  {id:"f8",sev:"neg",t:"Wired, MagSafe and wireless charging",how:"Charge with USB-C and with a MagSafe or Qi2 charger. The charging animation should appear on both.",flag:"Not charging, or charging only at certain cable angles.",conf:"certain"},
+  {id:"f9",sev:"neg",t:"Wi-Fi, Bluetooth, GPS and compass",how:"Join Wi-Fi, pair headphones, open Maps and check the blue dot and heading arrow track you.",flag:"Greyed-out Wi-Fi or Bluetooth switch (a board-level fault).",conf:"certain"},
+  {id:"f10",sev:"neg",t:"Phone stays cool and stable during use",how:"Use the camera for about 5 minutes. Note heat, freezing or restarts.",flag:"Random restarts or unusual heat.",conf:"certain"}
+ ]},
+ {id:"pay", title:"7 · Payment & handover", sub:"Protect yourself", items:[
+  {id:"h1",sev:"neg",t:"Meet in a public place, ideally a phone shop or Apple Store area",how:"A shop can confirm the phone on the spot. Avoid paying before every deal-breaker above passes.",flag:"Seller insists on a private location or pressures you to hurry.",conf:"certain"},
+  {id:"h2",sev:"neg",t:"Get a written receipt from the seller",how:"Name, ID number if possible, IMEI, price, date and a signature. Photograph the seller's ID if they agree.",flag:"Seller refuses to give any written record.",conf:"certain"},
+  {id:"h3",sev:"neg",t:"Use a traceable payment method",how:"Bank transfer or a payment method with a record, made only after all checks pass.",flag:"Cash-only and in a hurry, or a request to pay in advance.",conf:"certain"}
+ ]}
+];
+
+/* ---------- state ---------- */
+let model = "pro";
+let S = {};
+function key(){return "iphoneInspector:"+model}
+function load(){try{S=JSON.parse(localStorage.getItem(key())||"{}")}catch(e){S={}} S.items=S.items||{}; S.fields=S.fields||{}; S.fp=S.fp||null; S.touch=S.touch||[]}
+function save(){try{localStorage.setItem(key(),JSON.stringify(S))}catch(e){}}
+try{const m=localStorage.getItem("iphoneInspector:model"); if(m==="pro"||m==="max") model=m}catch(e){}
+
+/* ---------- identity ---------- */
+const IMEI_FIELDS=["imeiDial","imeiSet","imeiBox","imeiTray","imeiRcpt"];
+const ALL_FIELDS=IMEI_FIELDS.concat(["imei2","serSet","serBox","partNo","modelName"]);
+function digits(s){return (s||"").replace(/\D/g,"")}
+function luhn(d){ if(!/^\d{15}$/.test(d)) return false; let sum=0; for(let i=0;i<15;i++){let n=+d[14-i]; if(i%2===1){n*=2; if(n>9)n-=9} sum+=n} return sum%10===0 }
+const PREFIX={M:"New retail unit",F:"Apple Certified Refurbished",N:"Replacement unit issued by Apple service",P:"Personalised (engraved) retail unit"};
+const REGION={"LL/A":"USA","ZP/A":"Hong Kong / Macau","CH/A":"Mainland China","J/A":"Japan","B/A":"UK / Ireland","ZA/A":"Singapore / Malaysia","HN/A":"India","X/A":"Australia","C/A":"Canada","AE/A":"UAE / Middle East","KH/A":"South Korea","TH/A":"Thailand"};
+function setChk(id,cls,txt){const el=document.getElementById("c-"+id); if(el){el.className="chk "+cls; el.textContent=txt}}
+function checkIdentity(){
+  const out=[]; const v=id=>(document.getElementById(id).value||"").trim();
+  IMEI_FIELDS.concat(["imei2"]).forEach(id=>{const d=digits(v(id)); if(!d){setChk(id,"","");return}
+    if(d.length!==15) setChk(id,"bad","✗ "+d.length+" digits, IMEI needs 15");
+    else if(!luhn(d)) setChk(id,"bad","✗ Fails checksum. Typo or fake number");
+    else setChk(id,"ok","✓ Valid IMEI format (TAC "+d.slice(0,8)+")");});
+  const im=IMEI_FIELDS.map(id=>[id,digits(v(id))]).filter(x=>x[1].length===15);
+  const uniq=[...new Set(im.map(x=>x[1]))];
+  if(im.length>=2){ if(uniq.length===1) out.push(["ok","All "+im.length+" IMEI sources match."]); else out.push(["bad","IMEI mismatch between sources: "+im.map(x=>labelOf(x[0])+" = "+x[1]).join(" · ")]) }
+  const i2=digits(v("imei2")); if(i2.length===15 && uniq.includes(i2)) out.push(["warn","IMEI2 is identical to IMEI. On a real iPhone they differ."]);
+  if(i2.length===15 && uniq.length===1 && i2.slice(0,8)!==uniq[0].slice(0,8)) out.push(["warn","IMEI and IMEI2 have different TAC prefixes. Often normal, but compare both on the box and in Settings."]);
+  ["serSet","serBox"].forEach(id=>{const s=v(id).toUpperCase(); if(!s){setChk(id,"","");return}
+    if(/[^A-Z0-9]/.test(s)) setChk(id,"bad","✗ Serials only contain letters and digits");
+    else if(s.length===10) setChk(id,"ok","✓ 10 characters, the format of current Apple serials");
+    else if(s.length===12) setChk(id,"warn","! 12 characters is the older format, unexpected on a 2025 model");
+    else setChk(id,"bad","✗ "+s.length+" characters. Unexpected length");});
+  const a=v("serSet").toUpperCase(), b=v("serBox").toUpperCase();
+  if(a&&b) out.push(a===b?["ok","Serial matches the box."]:["bad","Serial in Settings does not match the box."]);
+  const p=v("partNo").toUpperCase().replace(/\s/g,"");
+  if(p){ const pre=PREFIX[p[0]]; const reg=Object.keys(REGION).find(r=>p.endsWith(r));
+    if(/^A\d{4}$/.test(p)) setChk("partNo","warn","! That is the A-number. Tap Model Number once more to see the part number.");
+    else if(!pre) setChk("partNo","bad","✗ Part numbers start with M, F, N or P");
+    else setChk("partNo",p[0]==="M"||p[0]==="P"?"ok":"warn",(p[0]==="M"||p[0]==="P"?"✓ ":"! ")+pre+(reg?" · sold in "+REGION[reg]:" · region code not in this list"));
+  } else setChk("partNo","","");
+  const mn=v("modelName"); if(mn){ const exp=SPECS[model].name; setChk("modelName",mn.toLowerCase()===exp.toLowerCase()?"ok":"bad",mn.toLowerCase()===exp.toLowerCase()?"✓ Matches the model you selected":"✗ Expected \""+exp+"\"") } else setChk("modelName","","");
+  document.getElementById("matchOut").innerHTML=out.map(o=>'<div class="chk '+o[0]+'">'+(o[0]==="ok"?"✓ ":o[0]==="bad"?"✗ ":"! ")+esc(o[1])+"</div>").join("");
+  return out;
+}
+function labelOf(id){return {imeiDial:"*#06#",imeiSet:"Settings",imeiBox:"Box",imeiTray:"SIM tray",imeiRcpt:"Receipt"}[id]||id}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+/* ---------- checklist render ---------- */
+function renderChecklist(){
+  const root=document.getElementById("checklist"); root.innerHTML="";
+  SECTIONS.forEach(sec=>{
+    const card=document.createElement("section"); card.className="card";
+    card.innerHTML='<div class="sec-head"><h2>'+esc(sec.title)+'</h2><span class="eyebrow">'+esc(sec.sub)+'</span></div>';
+    sec.items.forEach(it=>{
+      const d=document.createElement("div"); d.className="item";
+      d.innerHTML='<div class="t">'+esc(it.t)+'<span class="tag '+(it.sev==="deal"?"deal":"neg")+'">'+(it.sev==="deal"?"Deal-breaker":"Negotiate")+'</span>'+(it.conf==="likely"?' <span class="conf">likely</span>':'')+'</div>'+
+        '<div class="tri" role="group" aria-label="Result">'+["pass","fail","na"].map(v=>'<button type="button" data-id="'+it.id+'" data-v="'+v+'" aria-pressed="'+(S.items[it.id]===v)+'">'+(v==="na"?"N/A":v[0].toUpperCase()+v.slice(1))+'</button>').join("")+'</div>'+
+        '<div class="how">'+esc(it.how)+'</div><div class="flag">'+esc(it.flag)+'</div>';
+      card.appendChild(d);
+    });
+    root.appendChild(card);
+  });
+}
+document.getElementById("checklist").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-v]"); if(!b) return;
+  const id=b.dataset.id, v=b.dataset.v; S.items[id]=(S.items[id]===v?undefined:v); save();
+  b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(S.items[id]===x.dataset.v)));
+  update();
+});
+
+/* ---------- verdict ---------- */
+function allItems(){return SECTIONS.flatMap(s=>s.items)}
+function verdict(){
+  const items=allItems(); const done=items.filter(i=>S.items[i.id]).length;
+  const dealFail=items.filter(i=>i.sev==="deal"&&S.items[i.id]==="fail");
+  const negFail=items.filter(i=>i.sev==="neg"&&S.items[i.id]==="fail");
+  const idBad=checkIdentity().filter(o=>o[0]==="bad").length + document.querySelectorAll("#identity .chk.bad").length;
+  const fpBad=S.fp?S.fp.filter(r=>r.res==="bad").length:0;
+  let cls="idle",txt="Not started";
+  if(dealFail.length||idBad){cls="bad";txt="Walk away"}
+  else if(done===0){cls="idle";txt="Not started"}
+  else if(negFail.length||fpBad){cls="warn";txt=done<items.length?"Issues found · keep going":"Negotiate price"}
+  else if(done<items.length){cls="idle";txt="In progress · no issues yet"}
+  else {cls="ok";txt="All checks passed"}
+  return {cls,txt,done,total:items.length,dealFail,negFail,idBad,fpBad};
+}
+function update(){
+  ALL_FIELDS.forEach(id=>{S.fields[id]=document.getElementById(id).value}); S.notes=document.getElementById("notes").value; save();
+  const v=verdict(); const el=document.getElementById("verdict"); el.className="pill "+v.cls; el.textContent=v.txt;
+  document.getElementById("progFill").style.width=(v.done/v.total*100)+"%";
+  document.getElementById("progTxt").textContent=v.done+"/"+v.total;
+  document.getElementById("report").textContent=buildReport(v);
+}
+
+/* ---------- fingerprint ---------- */
+function webglRenderer(){try{const c=document.createElement("canvas");const g=c.getContext("webgl")||c.getContext("experimental-webgl"); if(!g) return "no WebGL"; const ext=g.getExtension("WEBGL_debug_renderer_info"); return ext?g.getParameter(ext.UNMASKED_RENDERER_WEBGL):g.getParameter(g.RENDERER)}catch(e){return "error"}}
+function runFp(){
+  const sp=SPECS[model]; const w=Math.min(screen.width,screen.height), h=Math.max(screen.width,screen.height);
+  const ua=navigator.userAgent; const gl=webglRenderer(); const tp=navigator.maxTouchPoints;
+  const rows=[
+    {k:"Operating system",read:/iPhone/.test(ua)?"iPhone (iOS)":/Android/.test(ua)?"Android":ua.slice(0,60),exp:"iPhone (iOS)",res:/iPhone/.test(ua)?"ok":"bad"},
+    {k:"Screen size (points)",read:w+" × "+h,exp:sp.ptW+" × "+sp.ptH,res:(w===sp.ptW&&h===sp.ptH)?"ok":"bad"},
+    {k:"Pixel ratio",read:String(window.devicePixelRatio),exp:String(sp.dpr),res:window.devicePixelRatio===sp.dpr?"ok":"bad"},
+    {k:"Graphics renderer",read:String(gl),exp:"Apple GPU",res:/Apple/.test(gl)?"ok":/Mali|Adreno|PowerVR|Immortalis|Xclipse/i.test(gl)?"bad":"warn"},
+    {k:"Max touch points",read:String(tp),exp:"5",res:tp===5?"ok":"warn"},
+    {k:"Physical pixels",read:Math.round(w*devicePixelRatio)+" × "+Math.round(h*devicePixelRatio),exp:sp.display.split(" ")[1].split("×").reverse().join(" × "),res:"info"}
+  ];
+  S.fp=rows; save(); renderFp(); update();
+}
+function renderFp(){
+  const t=document.getElementById("fpTable"); if(!S.fp){t.hidden=true;return} t.hidden=false;
+  t.querySelector("tbody").innerHTML=S.fp.map(r=>'<tr><td>'+esc(r.k)+'</td><td class="mono">'+esc(r.read)+'</td><td class="mono">'+esc(r.exp)+'</td><td class="r-'+(r.res==="info"?"":r.res)+'">'+({ok:"Match",bad:"Mismatch",warn:"Check",info:"Info"}[r.res])+'</td></tr>').join("");
+}
+document.getElementById("runFp").addEventListener("click",runFp);
+
+/* ---------- touch grid ---------- */
+const COLS=8, ROWS=14; const grid=document.getElementById("touchGrid");
+function buildGrid(){grid.innerHTML=""; for(let i=0;i<COLS*ROWS;i++){const d=document.createElement("div"); if(S.touch.includes(i)) d.className="hit"; grid.appendChild(d)} touchTxt()}
+function touchTxt(){document.getElementById("touchTxt").textContent=S.touch.length+" / "+(COLS*ROWS)+" squares"}
+function hitAt(x,y){const el=document.elementFromPoint(x,y); if(el&&el.parentElement===grid){const i=[...grid.children].indexOf(el); if(!S.touch.includes(i)){S.touch.push(i); el.className="hit"; touchTxt()}}}
+grid.addEventListener("pointerdown",e=>{grid.setPointerCapture&&grid.setPointerCapture(e.pointerId); hitAt(e.clientX,e.clientY)});
+grid.addEventListener("pointermove",e=>{if(e.buttons||e.pointerType==="touch") hitAt(e.clientX,e.clientY)});
+grid.addEventListener("pointerup",()=>save());
+document.getElementById("touchReset").addEventListener("click",()=>{S.touch=[]; save(); buildGrid()});
+
+/* ---------- colour screens ---------- */
+const COLORS=[["#000000","Black: look for lit dots"],["#FFFFFF","White: look for dark dots, yellow tint"],["#FF0000","Red"],["#00FF00","Green"],["#0000FF","Blue"],["#808080","Grey: look for burn-in shapes"]];
+let ci=-1; const ov=document.getElementById("overlay");
+function nextColor(){ci++; if(ci>=COLORS.length){ov.hidden=true; ci=-1; return} ov.hidden=false; ov.style.background=COLORS[ci][0]; document.getElementById("ovTxt").textContent=COLORS[ci][1]+" · tap for next ("+(ci+1)+"/"+COLORS.length+")"}
+document.getElementById("pixBtn").addEventListener("click",()=>{ci=-1; nextColor(); if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{})});
+ov.addEventListener("click",()=>{nextColor(); if(ov.hidden&&document.fullscreenElement) document.exitFullscreen().catch(()=>{})});
+
+/* ---------- report ---------- */
+function buildReport(v){
+  const sp=SPECS[model]; const f=S.fields; const L=[];
+  L.push("PRE-OWNED "+sp.name.toUpperCase()+" INSPECTION");
+  L.push("Verdict: "+v.txt+"  ("+v.done+"/"+v.total+" checks answered)");
+  L.push("");
+  L.push("IDENTITY");
+  [["IMEI *#06#","imeiDial"],["IMEI Settings","imeiSet"],["IMEI Box","imeiBox"],["IMEI SIM tray","imeiTray"],["IMEI2","imei2"],["IMEI Receipt","imeiRcpt"],["Serial Settings","serSet"],["Serial Box","serBox"],["Model Number","partNo"],["Model Name","modelName"]].forEach(([l,id])=>{if(f[id]) L.push("  "+l.padEnd(16)+f[id])});
+  document.querySelectorAll("#matchOut .chk").forEach(x=>L.push("  "+x.textContent));
+  L.push("");
+  if(v.dealFail.length){L.push("DEAL-BREAKER FAILURES"); v.dealFail.forEach(i=>L.push("  ✗ "+i.t))}
+  if(v.negFail.length){L.push("NEGOTIATION POINTS"); v.negFail.forEach(i=>L.push("  ! "+i.t))}
+  const open=allItems().filter(i=>!S.items[i.id]);
+  if(open.length){L.push("NOT YET CHECKED ("+open.length+")"); open.forEach(i=>L.push("  · "+i.t))}
+  if(S.fp){L.push(""); L.push("BROWSER FINGERPRINT"); S.fp.forEach(r=>L.push("  "+r.k+": "+r.read+"  [expected "+r.exp+"] "+r.res.toUpperCase()))}
+  L.push("  Touch grid: "+S.touch.length+"/"+(COLS*ROWS)+" squares");
+  if(S.notes){L.push(""); L.push("NOTES"); L.push(S.notes)}
+  return L.join("\n");
+}
+document.getElementById("copyRep").addEventListener("click",()=>{
+  const txt=document.getElementById("report").textContent; const msg=document.getElementById("copyMsg");
+  const sel=()=>{const r=document.createRange(); r.selectNodeContents(document.getElementById("report")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent="Copy blocked here. Report text is selected, copy it manually."};
+  try{navigator.clipboard.writeText(txt).then(()=>{msg.textContent="Copied."},sel)}catch(e){sel()}
+});
+document.getElementById("resetAll").addEventListener("click",()=>{document.getElementById("resetConfirm").hidden=false});
+document.getElementById("resetNo").addEventListener("click",()=>{document.getElementById("resetConfirm").hidden=true});
+document.getElementById("resetYes").addEventListener("click",()=>{S={items:{},fields:{},fp:null,touch:[]}; save(); document.getElementById("resetConfirm").hidden=true; boot()});
+
+/* ---------- model switch & boot ---------- */
+document.getElementById("modelSeg").addEventListener("click",e=>{const b=e.target.closest("button[data-m]"); if(!b) return; model=b.dataset.m; try{localStorage.setItem("iphoneInspector:model",model)}catch(err){} boot()});
+ALL_FIELDS.concat(["notes"]).forEach(id=>document.getElementById(id).addEventListener("input",update));
+function boot(){
+  load();
+  document.querySelectorAll("#modelSeg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===model)));
+  ALL_FIELDS.forEach(id=>{document.getElementById(id).value=S.fields[id]||""});
+  document.getElementById("modelName").placeholder=SPECS[model].name;
+  document.getElementById("notes").value=S.notes||"";
+  renderChecklist(); renderFp(); buildGrid(); update();
+}
+boot();
+})();
+</script>
+
+</html>
