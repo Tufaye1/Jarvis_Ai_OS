@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>iPhone USB Inspector</title>
+<style>
+/* Layout: Mac-first two-zone tool. Top: current phone (scan → battery → manual). Bottom: comparison of every phone scanned across shops. */
+:root{
+  --bg:#EFEFED; --card:#FFFFFF; --sunk:#F7F7F4; --line:#E2E2DC;
+  --ink:#101010; --ink2:#56564F; --ink3:#8A8A84;
+  --accent:#1F4FD1; --accent-ink:#FFFFFF;
+  --ok:#17803D; --ok-bg:#E5F3EA; --warn:#A35F00; --warn-bg:#FBEFD9; --bad:#C2261B; --bad-bg:#FBE4E1; --unk:#56564F; --unk-bg:#ECECE7;
+  --f-display:"SF Pro Display",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --f-body:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#121212; --card:#1B1B1A; --sunk:#222220; --line:#2F2F2C;
+  --ink:#F2F2EE; --ink2:#B5B5AE; --ink3:#85857F; --accent:#7C9BFF; --accent-ink:#0B0B0B;
+  --ok:#5CCB80; --ok-bg:#16301F; --warn:#F0B34F; --warn-bg:#33270F; --bad:#FF7A6E; --bad-bg:#3A1714; --unk:#B5B5AE; --unk-bg:#2A2A27; color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body)}
+.wrap{max-width:1040px;margin:0 auto;padding:24px max(16px,env(safe-area-inset-left)) 80px;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
+h1{font-size:1.7rem;letter-spacing:-.01em} h2{font-size:1.2rem} h3{font-size:1rem}
+p{margin:0}
+.muted{color:var(--ink2)} .small{font-size:.85rem} .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 .92rem var(--f-body);padding:9px 14px;border-radius:10px;cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.big{font-size:1.05rem;padding:14px 22px}
+.btn:disabled{opacity:.5;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--ink2);font-weight:500;min-width:0}
+input,select,textarea{font:500 .95rem var(--f-body);color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%}
+kbd{font:600 .8rem var(--f-mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:var(--sunk)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;counter-reset:s;margin:0;padding:0;list-style:none}
+.steps li{background:var(--sunk);border-radius:10px;padding:10px 12px;font-size:.88rem;counter-increment:s}
+.steps li::before{content:counter(s);font:700 .8rem var(--f-mono);color:var(--accent);margin-right:8px}
+.chip{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.78rem;white-space:nowrap}
+.chip.ok{background:var(--ok-bg);color:var(--ok)} .chip.warn{background:var(--warn-bg);color:var(--warn)} .chip.bad{background:var(--bad-bg);color:var(--bad)}
+.chip.info,.chip.unknown{background:var(--unk-bg);color:var(--unk)}
+.verdict{font:700 1.15rem var(--f-display);padding:10px 16px;border-radius:12px}
+.verdict.ok{background:var(--ok-bg);color:var(--ok)} .verdict.warn{background:var(--warn-bg);color:var(--warn)} .verdict.bad{background:var(--bad-bg);color:var(--bad)} .verdict.idle{background:var(--sunk);color:var(--ink2)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);white-space:nowrap}
+td .d{color:var(--ink2);font-size:.8rem}
+.err{background:var(--bad-bg);color:var(--bad);border-radius:10px;padding:12px 14px;font-weight:600}
+.note{background:var(--warn-bg);border-radius:10px;padding:12px 14px;font-size:.88rem}
+.note b{color:var(--warn)}
+.sec{display:flex;flex-direction:column;gap:0}
+.sec>h3{padding:6px 0 8px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.item{border-top:1px solid var(--line);padding:10px 0;display:grid;grid-template-columns:1fr auto;gap:4px 12px}
+.item .t{font-weight:600;min-width:0}
+.item .how{grid-column:1/-1;font-size:.84rem;color:var(--ink2)}
+.tag{font-size:.66rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:5px;margin-left:6px;vertical-align:2px}
+.tag.deal{background:var(--bad-bg);color:var(--bad)} .tag.neg{background:var(--warn-bg);color:var(--warn)}
+.tri{display:inline-flex;gap:4px;align-self:start}
+.tri button{border:1px solid var(--line);background:var(--card);color:var(--ink2);font:700 .76rem var(--f-body);padding:5px 9px;border-radius:8px;cursor:pointer;min-width:42px}
+.tri button[data-v="pass"][aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.tri button[data-v="fail"][aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.tri button[data-v="na"][aria-pressed="true"]{background:var(--ink2);border-color:var(--ink2);color:var(--card)}
+.big-num{font:700 2rem var(--f-display);font-variant-numeric:tabular-nums}
+.stat{background:var(--sunk);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+tr.best td{background:var(--ok-bg)}
+tr.out td{opacity:.6}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--sunk);border-radius:10px;padding:14px;font:.8rem/1.55 var(--f-mono);margin:0;max-height:360px;overflow:auto}
+@media (max-width:600px){.item{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="row" style="justify-content:space-between;align-items:flex-end">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <span class="eyebrow">Shop-to-shop comparison · US iPhone 17 Pro / Pro Max</span>
+      <h1>iPhone USB Inspector</h1>
+    </div>
+    <span id="demoBadge" class="chip warn" hidden>DEMO DATA, no phone connected</span>
+  </header>
+
+  <!-- ===== CURRENT PHONE ===== -->
+  <section class="card">
+    <div class="row" style="justify-content:space-between"><h2>1 · Phone on the counter</h2><span class="eyebrow">Fill before scanning</span></div>
+    <div class="grid">
+      <label class="f">Shop name<input id="shop" placeholder="e.g. Shop A, Level 3"></label>
+      <label class="f">Asking price<input id="price" inputmode="numeric" placeholder="e.g. 145000"></label>
+      <label class="f">Model you're inspecting<select id="expect"><option value="pro">iPhone 17 Pro</option><option value="max">iPhone 17 Pro Max</option></select></label>
+      <label class="f">Storage advertised<select id="storage"><option>256 GB</option><option>512 GB</option><option>1 TB</option><option>2 TB</option></select></label>
+      <label class="f">Colour<select id="color"><option>Cosmic Orange</option><option>Deep Blue</option><option>Silver</option></select></label>
+      <label class="f">Shop warranty / return days<input id="warranty" placeholder="e.g. 7-day return, 3-month warranty"></label>
+    </div>
+    <ol class="steps">
+      <li>Connect the phone to this Mac with a USB-C <b>data</b> cable.</li>
+      <li>Unlock the phone. Tap <b>Trust</b> and enter its passcode. Shops usually know it, or it is at the Hello screen. Finish setup with Wi-Fi first.</li>
+      <li>Press <kbd>Enter</kbd> or the button. A scan takes about 5–20 seconds.</li>
+    </ol>
+    <div class="row">
+      <button class="btn primary big" id="scanBtn" type="button">Scan phone <kbd style="background:transparent;color:inherit;border-color:currentColor">Enter</kbd></button>
+      <span id="scanState" class="muted small"></span>
+    </div>
+    <div id="scanErr" class="err" hidden></div>
+  </section>
+
+  <section class="card" id="resultCard" hidden>
+    <div class="row" style="justify-content:space-between">
+      <h2>2 · Automatic results</h2>
+      <span id="autoVerdict" class="verdict idle"></span>
+    </div>
+    <div class="tbl"><table><thead><tr><th>Check</th><th>Reading</th><th>Result</th></tr></thead><tbody id="autoBody"></tbody></table></div>
+    <p class="small muted">"Unknown" means the phone refused that read. It is not a pass, so do that check by hand.</p>
+  </section>
+
+  <section class="card">
+    <div class="row" style="justify-content:space-between"><h2>3 · Battery drain test</h2><span class="eyebrow">Run it only on your final 1–2 phones</span></div>
+    <div class="note"><b>Read this first.</b> The phone charges while it's plugged into the Mac, so drain can't be measured while it's connected. The tool reads the level, you unplug and run the same workload for a fixed time, then plug back in and it reads again. The level only moves in whole 1% steps, so a 5-minute test is mostly noise. 10 minutes is the shortest that means anything.</div>
+    <div class="grid">
+      <label class="f">Duration<select id="dDur"><option value="10" selected>10 minutes</option><option value="15">15 minutes</option><option value="5">5 minutes (rough)</option></select></label>
+      <label class="f">Workload (use the same one on every phone)<select id="dLoad"><option value="video">Downloaded/streamed video, 50% brightness</option><option value="camera">4K camera recording</option></select></label>
+    </div>
+    <div class="row">
+      <button class="btn" id="dStart" type="button">Start: read level, then unplug</button>
+      <button class="btn primary" id="dEnd" type="button" disabled>Finish: plug back in, then read</button>
+      <span id="dTimer" class="mono big-num" hidden></span>
+    </div>
+    <div id="dOut" class="small"></div>
+  </section>
+
+  <section class="card">
+    <div class="row" style="justify-content:space-between"><h2>4 · Hands-on checks</h2><span id="manProg" class="eyebrow"></span></div>
+    <p class="small muted">The Mac can't test cameras, speakers, buttons or the body. Run these on the phone and mark each one. Deal-breakers rule the phone out.</p>
+    <div id="manual"></div>
+  </section>
+
+  <section class="card">
+    <div class="row" style="justify-content:space-between"><h2>5 · Save this phone</h2><span id="curScore" class="eyebrow"></span></div>
+    <label class="f">Notes (scratches, what the shop said, anything odd)<textarea id="notes" rows="2"></textarea></label>
+    <div class="row">
+      <button class="btn primary" id="saveBtn" type="button">Save to comparison</button>
+      <button class="btn" id="newBtn" type="button">Clear for next phone</button>
+      <span id="saveMsg" class="small muted"></span>
+    </div>
+  </section>
+
+  <!-- ===== COMPARISON ===== -->
+  <section class="card">
+    <div class="row" style="justify-content:space-between"><h2>Comparison</h2><span class="eyebrow">Best first · saved in this browser</span></div>
+    <div class="tbl"><table><thead><tr><th>#</th><th>Shop</th><th>Price</th><th>Model</th><th>Storage</th><th>Battery</th><th>Cycles</th><th>Panics</th><th>Unit</th><th>Drain</th><th>Fails</th><th>Score</th><th></th></tr></thead><tbody id="cmpBody"></tbody></table></div>
+    <p class="small muted">Score starts at 100 and loses points for battery wear, cycles, panic logs, refurbished or replacement units, battery drain and each failed hands-on check. Any deal-breaker sets it to 0. It ranks condition only. You weigh price yourself.</p>
+    <div class="row"><button class="btn" id="copyAll" type="button">Copy full report</button><span id="copyMsg" class="small muted"></span></div>
+    <pre id="report"></pre>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* Auto checks that rule a phone out when they come back "bad" */
+const AUTO_DEAL=new Set(["class","model","imei","imei2","activation","findmy","mdm","baseband","region"]);
+
+/* sev: deal = rule out on fail, neg = deduct */
+const MANUAL=[
+ {g:"Paperwork & shop terms",time:"1 min",items:[
+  ["m1","deal","Apple Check Coverage accepts the serial and shows the same model","On your own phone, open checkcoverage.apple.com and enter the serial from the scan."],
+  ["m2","deal","Carrier Lock: No SIM restrictions","Settings › General › About › Carrier Lock. US phones are often locked to AT&T, Verizon or T-Mobile, and a locked one will not work with your local SIM or eSIM."],
+  ["m3","deal","Your eSIM can be added","The US 17 Pro has no SIM tray. Ask the shop to show eSIM working, or confirm your carrier issues eSIM. A US unit cannot take a physical SIM."],
+  ["m4","neg","Shop gives a written invoice with IMEI, price, date and return/warranty terms","No invoice means no recourse if it turns out to be blacklisted or locked later."],
+  ["m5","neg","Shop says whether it's a refurb or had parts replaced, and it matches Parts and Service History","Ask before you check. A shop that lies here will lie elsewhere."]
+ ]},
+ {g:"Ownership",time:"2 min",items:[
+  ["o1","deal","Erase and set up shows no Activation Lock","If the phone isn't already at the Hello screen, ask the shop to erase it (Settings › General › Transfer or Reset iPhone). Set it up yourself. You must never see 'iPhone Locked to Owner'."],
+  ["o2","deal","No Remote Management screen during setup","That screen means a company owns it. It can't be removed."],
+  ["o3","neg","Settings › General › About › Parts and Service History shows no Unknown Part","Missing section = no parts replaced (good). 'Genuine Apple Part' is acceptable but worth less."],
+  ["o4","neg","Settings › Battery › Battery Health matches the scan (within about 1–2%)","A big gap between Settings and the chip reading is odd. Note both."]
+ ]},
+ {g:"Body",time:"2 min",items:[
+  ["b1","deal","No SIM tray on the left side","US 17 Pro units are eSIM-only. A tray on a phone reporting LL/A means a swapped housing or a fake."],
+  ["b2","neg","Four corners and all edges: no dents, chips or bends","Lay it flat on the counter. It must not rock."],
+  ["b3","neg","Back glass and the camera plateau: no cracks; lens covers not scratched","Tilt under the shop light. A scratched lens cover ruins photos."],
+  ["b4","neg","Screen: no scratches, no lifting, even gap to the frame","Run a fingernail around the edge."],
+  ["b5","neg","Pentalobe screws by the USB-C port are clean","Chewed screw heads mean it has been opened."],
+  ["b6","neg","USB-C port clean and the cable sits firmly","Lint or a wobbly cable causes charging faults."]
+ ]},
+ {g:"Buttons",time:"1 min",items:[
+  ["k1","neg","Volume up and down click and change volume","Each press should give a crisp click."],
+  ["k2","neg","Side button: lock, double-click, long-press for Siri",""],
+  ["k3","neg","Action button works","Long-press it. Assign it to Flashlight in Settings › Action Button to test both at once."],
+  ["k4","neg","Camera Control: click opens Camera, light press, swipe changes zoom","Swipe left and right along the button while Camera is open."]
+ ]},
+ {g:"Display & touch",time:"3 min",items:[
+  ["d1","neg","No dead or stuck pixels on black","Open Camera, cover the lens, and look at the black screen at full brightness."],
+  ["d2","neg","No tint, yellow patches or burn-in on white","Open a blank note in light mode at full brightness."],
+  ["d3","neg","Touch works across the whole screen","Long-press the Home Screen until icons jiggle, then drag one icon slowly into every corner and edge. It must never drop."],
+  ["d4","neg","ProMotion: scrolling is smooth; Settings › Accessibility › Motion has Limit Frame Rate","The Limit Frame Rate option exists only on 120 Hz displays."],
+  ["d5","neg","True Tone and auto-brightness react","Cover the top-front sensor with your hand. The screen should dim."],
+  ["d6","neg","Always-On display works when locked","Lock the phone. The dimmed clock and wallpaper should stay visible."],
+  ["d7","neg","Dynamic Island animates","Start a timer and go to the Home Screen."]
+ ]},
+ {g:"Cameras & light",time:"3 min",items:[
+  ["c1","neg","0.5× ultra wide sharp","Tap each zoom button. Watch for blur, spots or a black image."],
+  ["c2","neg","1× main sharp, focuses near and far",""],
+  ["c3","neg","4× and 8× telephoto sharp",""],
+  ["c4","neg","Macro: focuses at about 2–3 cm","Move very close to text. It should auto-switch and stay sharp."],
+  ["c5","neg","Front camera photo and video sharp","Also try Portrait mode."],
+  ["c6","neg","4K video records with sound and is stable","Record 10 seconds while walking. No jitter, buzzing or clicking from the lens."],
+  ["c7","neg","Flash fires; flashlight has all brightness levels","Control Center › long-press the flashlight."],
+  ["c8","neg","LiDAR: Measure app measures a person's height","Point the Measure app at a person."],
+  ["c9","neg","Face ID sets up and unlocks","Settings › Face ID & Passcode. 'Face ID is not available' rules out the phone in practice."]
+ ]},
+ {g:"Sound & sensors",time:"2 min",items:[
+  ["s1","neg","Bottom speaker and top earpiece both play (stereo)","Play music at full volume and cover each speaker in turn."],
+  ["s2","neg","Microphones: Voice Memo plays back clearly","Record 5 seconds and play it back."],
+  ["s3","neg","Video recording captures sound","Covered by c6. Mark here when it's done."],
+  ["s4","neg","Proximity sensor: screen goes dark on a call","Call someone, cover the top of the screen."],
+  ["s5","neg","Vibration is a crisp tap","Toggle Silent mode."],
+  ["s6","neg","Compass and Level (gyroscope) behave","Compass app; Measure › Level on a flat counter should read 0°."]
+ ]},
+ {g:"Wireless & charging",time:"2 min",items:[
+  ["w1","neg","Wi-Fi joins the shop network and loads a page","A greyed-out Wi-Fi switch is a board fault."],
+  ["w2","neg","Bluetooth finds nearby devices",""],
+  ["w3","neg","GPS: Maps shows your location and heading",""],
+  ["w4","neg","Charges from the Mac (the scan shows 'charging') and on MagSafe if available",""],
+  ["w5","neg","Cellular: calls and mobile data work with an eSIM","Often only possible after purchase. Make sure the return window covers it."]
+ ]}
+];
+const ALL_MANUAL=MANUAL.flatMap(g=>g.items);
+
+/* ---------- state ---------- */
+let cur=blank(); let saved=[];
+function blank(){return {id:Date.now(),scan:null,manual:{},drain:null}}
+try{saved=JSON.parse(localStorage.getItem("usbInspector:saved")||"[]")}catch(e){saved=[]}
+function persist(){try{localStorage.setItem("usbInspector:saved",JSON.stringify(saved))}catch(e){}}
+
+/* ---------- scan ---------- */
+let busy=false;
+async function scan(){
+  if(busy) return; busy=true; $("scanBtn").disabled=true; $("scanErr").hidden=true; $("scanState").textContent="Scanning… keep the phone unlocked. Tap Trust if it asks.";
+  try{
+    const r=await fetch("/api/scan?expect="+$("expect").value); const j=await r.json();
+    if(!r.ok) throw new Error((j.hint?j.hint+"  ":"")+"("+j.error+")");
+    cur.scan=j; $("demoBadge").hidden=!j.demo; renderAuto(); $("scanState").textContent="Scanned "+new Date().toLocaleTimeString();
+    $("resultCard").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(e){ $("scanErr").hidden=false; $("scanErr").textContent=e.message.includes("Failed to fetch")?"The local server isn't running. Start it with ./run.sh in Terminal.":e.message; $("scanState").textContent=""; }
+  finally{busy=false; $("scanBtn").disabled=false; refresh()}
+}
+$("scanBtn").addEventListener("click",scan);
+document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName)){e.preventDefault(); scan()} });
+
+function autoVerdict(s){
+  if(!s) return {cls:"idle",txt:"Not scanned"};
+  const bad=s.checks.filter(c=>c.status==="bad"); const deal=bad.filter(c=>AUTO_DEAL.has(c.id));
+  if(deal.length) return {cls:"bad",txt:"Rule out: "+deal.map(c=>c.label).join(", ")};
+  if(bad.length||s.checks.some(c=>c.status==="warn"||c.status==="unknown")) return {cls:"warn",txt:"Passed with warnings"};
+  return {cls:"ok",txt:"All automatic checks passed"};
+}
+function renderAuto(){
+  const s=cur.scan; $("resultCard").hidden=!s; if(!s) return;
+  $("autoBody").innerHTML=s.checks.map(c=>'<tr><td><b>'+esc(c.label)+'</b>'+(c.detail?'<div class="d">'+esc(c.detail)+'</div>':'')+'</td><td class="mono">'+esc(c.value)+'</td><td><span class="chip '+c.status+'">'+({ok:"Pass",warn:"Check",bad:"Fail",info:"Info",unknown:"Unknown"}[c.status])+'</span></td></tr>').join("");
+  const v=autoVerdict(s); $("autoVerdict").className="verdict "+v.cls; $("autoVerdict").textContent=v.txt;
+}
+
+/* ---------- drain test ---------- */
+let dStart=null, tick=null;
+async function readBattery(){const r=await fetch("/api/battery"); const j=await r.json(); if(!r.ok) throw new Error(j.hint||j.error); return j}
+$("dStart").addEventListener("click",async()=>{
+  $("dOut").textContent="Reading…";
+  try{ const b=await readBattery(); dStart={...b,t:Date.now()}; $("dEnd").disabled=false;
+    $("dOut").innerHTML="Start level <b>"+b.level+"%</b>. <b>Unplug now</b> and start the "+($("dLoad").value==="video"?"video at 50% brightness":"4K recording")+". Plug back in when the timer ends.";
+    const end=Date.now()+(+$("dDur").value)*60000; $("dTimer").hidden=false; clearInterval(tick);
+    tick=setInterval(()=>{const left=Math.max(0,end-Date.now()); $("dTimer").textContent=String(Math.floor(left/60000)).padStart(2,"0")+":"+String(Math.floor(left/1000)%60).padStart(2,"0"); if(!left){clearInterval(tick); $("dTimer").textContent="Plug in now";}},250);
+  }catch(e){$("dOut").innerHTML='<span class="chip bad">Error</span> '+esc(e.message)}
+});
+$("dEnd").addEventListener("click",async()=>{
+  try{ const b=await readBattery(); clearInterval(tick); $("dTimer").hidden=true;
+    const mins=(Date.now()-dStart.t)/60000; const drop=dStart.level-b.level; const perHour=drop/mins*60;
+    const load=$("dLoad").value; const lim=load==="video"?{ok:12,warn:18}:{ok:25,warn:35}; // %/hour, [guessing] thresholds
+    const st=perHour<=lim.ok?"ok":perHour<=lim.warn?"warn":"bad";
+    cur.drain={drop,mins:+mins.toFixed(1),perHour:+perHour.toFixed(1),load,st};
+    $("dEnd").disabled=true;
+    $("dOut").innerHTML='<span class="chip '+st+'">'+({ok:"Normal",warn:"High",bad:"Too high"}[st])+'</span> Dropped <b>'+drop+'%</b> in '+mins.toFixed(1)+' min, about <b>'+perHour.toFixed(1)+'% per hour</b>. Rough guide for this workload: up to '+lim.ok+'%/h normal, over '+lim.warn+'%/h a problem. These limits are estimates. Compare phones against each other, using the same workload and brightness.';
+    refresh();
+  }catch(e){$("dOut").innerHTML='<span class="chip bad">Error</span> '+esc(e.message)+" Plug the phone back in and try Finish again."}
+});
+
+/* ---------- manual ---------- */
+function renderManual(){
+  $("manual").innerHTML=MANUAL.map(g=>'<div class="sec"><h3><span>'+esc(g.g)+'</span><span class="eyebrow">~'+g.time+'</span></h3>'+g.items.map(([id,sev,t,how])=>
+    '<div class="item"><div class="t">'+esc(t)+'<span class="tag '+sev+'">'+(sev==="deal"?"Deal-breaker":"Deduct")+'</span></div><div class="tri">'+
+    ["pass","fail","na"].map(v=>'<button type="button" data-id="'+id+'" data-v="'+v+'" aria-pressed="'+(cur.manual[id]===v)+'">'+(v==="na"?"N/A":v[0].toUpperCase()+v.slice(1))+'</button>').join("")+'</div>'+(how?'<div class="how">'+esc(how)+'</div>':'')+'</div>').join("")+'</div>').join("");
+}
+$("manual").addEventListener("click",e=>{const b=e.target.closest("button[data-v]"); if(!b) return; const id=b.dataset.id; cur.manual[id]=cur.manual[id]===b.dataset.v?undefined:b.dataset.v;
+  b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(cur.manual[id]===x.dataset.v))); refresh()});
+
+/* ---------- scoring ---------- */
+function get(s,id){return s&&s.checks.find(c=>c.id===id)}
+function score(p){
+  const s=p.scan; const reasons=[];
+  const dealManual=ALL_MANUAL.filter(i=>i[1]==="deal"&&p.manual[i[0]]==="fail");
+  const dealAuto=s?s.checks.filter(c=>c.status==="bad"&&AUTO_DEAL.has(c.id)):[];
+  if(dealManual.length||dealAuto.length) return {score:0,out:true,reasons:dealAuto.map(c=>c.label).concat(dealManual.map(i=>i[2]))};
+  let sc=100;
+  const bh=get(s,"bhealth"); const pct=bh?parseFloat(bh.value):NaN; if(!isNaN(pct)) sc-=Math.max(0,100-pct)*2;
+  const cy=get(s,"cycles"); if(cy) sc-=Math.min(20,(+cy.value||0)/25);
+  const pn=get(s,"panics"); if(pn) sc-=Math.min(20,(parseInt(pn.value)||0)*5);
+  const part=get(s,"part"); if(part&&part.status==="warn") sc-=10;
+  if(p.drain) sc-=p.drain.st==="bad"?15:p.drain.st==="warn"?7:0;
+  const fails=ALL_MANUAL.filter(i=>p.manual[i[0]]==="fail").length; sc-=fails*5;
+  if(!s) sc-=30;
+  return {score:Math.max(1,Math.round(sc)),out:false,reasons};
+}
+
+/* ---------- save / compare ---------- */
+function meta(){return {shop:$("shop").value.trim()||"Unnamed shop",price:$("price").value.trim(),expect:$("expect").value,storage:$("storage").value,color:$("color").value,warranty:$("warranty").value.trim(),notes:$("notes").value.trim()}}
+$("saveBtn").addEventListener("click",()=>{
+  const p={...cur,...meta(),savedAt:new Date().toISOString()};
+  const i=saved.findIndex(x=>x.id===p.id); if(i>=0) saved[i]=p; else saved.push(p); persist(); refresh();
+  $("saveMsg").textContent="Saved "+p.shop+". Clear for the next phone when ready.";
+});
+$("newBtn").addEventListener("click",()=>{cur=blank(); ["shop","price","warranty","notes"].forEach(id=>$(id).value=""); $("dOut").textContent=""; $("dEnd").disabled=true; $("scanErr").hidden=true; $("scanState").textContent=""; $("saveMsg").textContent=""; renderManual(); renderAuto(); refresh(); window.scrollTo({top:0,behavior:"smooth"})});
+
+function renderCompare(){
+  const rows=saved.map(p=>({p,s:score(p)})).sort((a,b)=>b.s.score-a.s.score||(+a.p.price||1e12)-(+b.p.price||1e12));
+  const bestId=rows.find(r=>!r.s.out)?.p.id;
+  $("cmpBody").innerHTML=rows.length?rows.map((r,i)=>{const p=r.p,s=p.scan;
+    const v=id=>esc(get(s,id)?.value??"–");
+    return '<tr class="'+(r.s.out?"out":p.id===bestId?"best":"")+'"><td class="mono">'+(i+1)+'</td><td><b>'+esc(p.shop)+'</b>'+(p.warranty?'<div class="d">'+esc(p.warranty)+'</div>':'')+(r.s.out?'<div class="d" style="color:var(--bad)">Ruled out: '+esc(r.s.reasons.join("; "))+'</div>':'')+'</td><td class="mono">'+esc(p.price||"–")+'</td><td>'+esc(s?.model||(p.expect==="max"?"17 Pro Max":"17 Pro"))+'<div class="d">'+esc(p.color)+'</div></td><td>'+esc((get(s,"storage")?.value||p.storage).split("  ")[0])+'</td><td class="mono">'+v("bhealth").split("  ")[0]+'</td><td class="mono">'+v("cycles")+'</td><td class="mono">'+v("panics")+'</td><td>'+esc((get(s,"part")?.detail||"–").replace(" unit","").replace("Apple Certified ",""))+'</td><td class="mono">'+(p.drain?p.drain.perHour+"%/h":"–")+'</td><td class="mono">'+ALL_MANUAL.filter(x=>p.manual[x[0]]==="fail").length+'</td><td><span class="chip '+(r.s.out?"bad":r.s.score>=85?"ok":"warn")+'">'+r.s.score+'</span></td><td><button class="btn" type="button" data-load="'+p.id+'">Open</button> <button class="btn" type="button" data-del="'+p.id+'">Delete</button></td></tr>'}).join(""):'<tr><td colspan="13" class="muted">No phones saved yet. Scan one, run the hands-on checks, then press Save.</td></tr>';
+}
+$("cmpBody").addEventListener("click",e=>{
+  const l=e.target.closest("[data-load]"), d=e.target.closest("[data-del]");
+  if(l){const p=saved.find(x=>String(x.id)===l.dataset.load); if(!p) return; cur={id:p.id,scan:p.scan,manual:{...p.manual},drain:p.drain};
+    ["shop","price","warranty","notes"].forEach(k=>$(k).value=p[k]||""); $("expect").value=p.expect; $("storage").value=p.storage; $("color").value=p.color; renderManual(); renderAuto(); refresh(); window.scrollTo({top:0,behavior:"smooth"})}
+  if(d){ if(d.dataset.armed){saved=saved.filter(x=>String(x.id)!==d.dataset.del); persist(); refresh()} else {d.dataset.armed="1"; d.textContent="Confirm delete"} }
+});
+
+function report(){
+  const L=["iPHONE 17 PRO / PRO MAX SHOP COMPARISON",new Date().toLocaleString(),""];
+  saved.map(p=>({p,s:score(p)})).sort((a,b)=>b.s.score-a.s.score).forEach(({p,s},i)=>{
+    L.push((i+1)+". "+p.shop+"  |  price "+(p.price||"?")+"  |  score "+s.score+(s.out?" (RULED OUT)":""));
+    if(p.scan) p.scan.checks.forEach(c=>L.push("   "+c.label+": "+c.value+" ["+c.status+"]"));
+    if(p.drain) L.push("   Drain: "+p.drain.drop+"% in "+p.drain.mins+" min ("+p.drain.perHour+"%/h, "+p.drain.load+")");
+    const f=ALL_MANUAL.filter(x=>p.manual[x[0]]==="fail"); if(f.length) L.push("   Failed: "+f.map(x=>x[2]).join("; "));
+    const open=ALL_MANUAL.filter(x=>!p.manual[x[0]]).length; if(open) L.push("   Not checked: "+open+" hands-on items");
+    if(p.warranty) L.push("   Terms: "+p.warranty); if(p.notes) L.push("   Notes: "+p.notes); L.push("");
+  });
+  return L.join("\n");
+}
+$("copyAll").addEventListener("click",()=>{navigator.clipboard.writeText(report()).then(()=>$("copyMsg").textContent="Copied.",()=>$("copyMsg").textContent="Copy blocked. Select the text below.")});
+
+function refresh(){
+  const done=ALL_MANUAL.filter(i=>cur.manual[i[0]]).length; $("manProg").textContent=done+" / "+ALL_MANUAL.length+" checked";
+  const s=score(cur); $("curScore").textContent=s.out?"Ruled out":"Current score "+s.score;
+  renderCompare(); $("report").textContent=report();
+}
+renderManual(); refresh();
+})();
+</script>
+</body>
+</html>
