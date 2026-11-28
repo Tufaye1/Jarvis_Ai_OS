@@ -105,7 +105,8 @@ a{color:var(--accent)}
   <header style="display:flex;flex-direction:column;gap:8px">
     <span class="eyebrow">Pre-owned · US model (LL/A) · eSIM only</span>
     <h1 style="font-size:1.7rem">iPhone 17 Pro / Pro Max buying guide</h1>
-    <p class="muted small">One step at a time. Do what it says, then tap <b>Pass</b>, <b>Fail</b> or <b>Skip</b>. <b style="color:var(--bad)">STOP</b> steps: if one fails, don't buy that phone. Everything saves automatically, and you can switch between phones at the top.</p>
+    <p class="muted small">One step at a time. Do what it says, then tap <b>Pass</b>, <b>Fail</b> or <b>Skip</b>. <b style="color:var(--bad)">STOP</b> steps: if one fails, don't buy that phone. Everything saves automatically, and you can switch between phones at the top. <b>No cable or laptop needed.</b> You do each test by hand on the phone you're buying.</p>
+    <div class="row"><button class="btn sm" id="demoLoad" type="button">Try it with 3 demo phones</button><button class="btn sm" id="demoClear" type="button" hidden>Remove demo phones</button><span id="demoMsg" class="small muted"></span></div>
   </header>
 
   <section class="card" id="phoneCard">
@@ -129,7 +130,7 @@ a{color:var(--accent)}
   <section class="card">
     <div class="row" style="justify-content:space-between"><h2 style="font-size:1.1rem">Compare phones</h2><span class="eyebrow">Every phone you saved</span></div>
     <div class="tbl"><table><thead><tr><th>Shop</th><th>Price</th><th>Model</th><th>Health</th><th>Cycles</th><th>Drain</th><th>Fails</th><th>Done</th><th>Result</th></tr></thead><tbody id="cmp"></tbody></table></div>
-    <p class="small muted">Saved to this artifact. Claude can read these results too, so just say "check my phones" in the chat.</p>
+    <p class="small muted">Your phones are private to you, even if you share this link. Other people get their own empty list. Claude can read your results, so just say "check my phones" in the chat.</p>
     <div class="row"><button class="btn" id="copyBtn" type="button">Copy summary of this phone</button><button class="btn" id="delBtn" type="button">Delete this phone</button><span id="copyMsg" class="small muted"></span></div>
     <div id="delConfirm" class="confirm" hidden>Delete this phone and all its answers? <button class="btn sm" id="delYes" type="button">Yes, delete</button><button class="btn sm" id="delNo" type="button">Cancel</button></div>
     <pre id="summary"></pre>
@@ -479,16 +480,36 @@ $("delYes").addEventListener("click",async()=>{const id=curId;delete phones[id];
   const rest=Object.keys(phones);if(!rest.length){const p=newPhone();phones[p.id]=p;queueSave(p)}select(Object.keys(phones)[0])});
 function select(id){curId=id;cur=phones[id];idx=Math.min(cur.step||0,STEPS.length-1);try{localStorage.setItem(LS+":cur",id)}catch(e){}render()}
 
+/* ===================== DEMO ===================== */
+function demoPhone(n,shop,price,model,storage,color,over){const p=newPhone();p.id="demo"+n+Date.now().toString(36);p.demo=true;p.shop=shop;p.price=price;p.model=model;p.storage=storage;p.color=color;p.created=new Date(Date.now()+n).toISOString();
+  STEPS.forEach(s=>{p.r[s.id]={s:"pass",v:{}}});
+  p.r.batStart.v={pct:"64",time:"14:05"};p.r.batEnd.v={pct:"55",time:"14:41",charged:"no"};
+  p.r.model.v={mn:"MG8H4LL/A"};p.r.serial.v={sn:"DEMO12345X"};p.r.imei.v={imei:"490154203237518"};
+  p.r.health.v={cap:"98",cyc:"90"};p.r.batDates.v={first:"10/2025"};p.r.panic.v={n:"0"};p.r.invoice.v={terms:"7-day return (demo)"};
+  over(p);p.step=STEPS.length-1;return p}
+const DEMOS=[
+ ()=>demoPhone(1,"DEMO Shop A","145000","iPhone 17 Pro","256 GB","Deep Blue",p=>{}),
+ ()=>demoPhone(2,"DEMO Shop B","152000","iPhone 17 Pro Max","512 GB","Cosmic Orange",p=>{p.r.carrier={s:"fail",v:{},note:"Says: SIM locked (demo)"};p.r.health.v={cap:"96",cyc:"150"}}),
+ ()=>demoPhone(3,"DEMO Shop C","138000","iPhone 17 Pro","256 GB","Silver",p=>{p.r.health.v={cap:"91",cyc:"140"};p.r.hiss={s:"fail",v:{},note:"Faint hiss while charging (demo)"};p.r.plateau={s:"fail",v:{},note:"Two small chips on camera edge (demo)"};p.r.batEnd.v={pct:"49",time:"14:41",charged:"no"};p.r.erase={};p.r.invoice={}})
+];
+function demoBtns(){const has=Object.values(phones).some(p=>p.demo);$("demoClear").hidden=!has;$("demoLoad").hidden=has}
+$("demoLoad").addEventListener("click",()=>{const made=DEMOS.map(f=>f());made.forEach(p=>{phones[p.id]=p;queueSave(p)});select(made[0].id);demoBtns();$("demoMsg").textContent="Loaded. Switch phones at the top, then scroll to Compare.";});
+$("demoClear").addEventListener("click",async()=>{const ids=Object.values(phones).filter(p=>p.demo).map(p=>p.id);ids.forEach(id=>{delete phones[id];clearTimeout(pending[id])});lsSave();
+  if(col){for(const id of ids){try{await col.doc(id).delete()}catch(e){}}}
+  if(!Object.keys(phones).length){const p=newPhone();phones[p.id]=p}select(Object.keys(phones)[0]);demoBtns();$("demoMsg").textContent="Demo phones removed.";});
+
 /* ===================== BOOT ===================== */
 phones=lsLoad();
 if(!Object.keys(phones).length){const p=newPhone();phones[p.id]=p}
 let last=null;try{last=localStorage.getItem(LS+":cur")}catch(e){}
-select(phones[last]?last:Object.keys(phones)[0]);setSave("Saved on this device");
+select(phones[last]?last:Object.keys(phones)[0]);setSave("Saved on this device");demoBtns();
 
 (async()=>{try{
   db=window.claude&&window.claude.use?await window.claude.use("db"):null;
   if(!db){setSave("Saved on this device only");return}
-  col=db.collection("inspections");
+  const user=await window.claude.use("user");const uid=user?await user.id():null;
+  if(!uid){db=null;setSave("Saved on this device only");return}
+  col=db.collection("data/users/"+uid);
   let first=true;
   col.onSnapshot(snap=>{let changed=false;
     snap.docs.forEach(d=>{const x=d.data();if(!x||!x.id)return;const mine=phones[x.id];
@@ -497,7 +518,7 @@ select(phones[last]?last:Object.keys(phones)[0]);setSave("Saved on this device")
     lsSave();
     if(changed){const keepIdx=idx;cur=phones[curId]||Object.values(phones)[0];curId=cur.id;idx=keepIdx;
       const ae=document.activeElement;const typing=ae&&$("stepCard").contains(ae)&&ae.tagName==="INPUT";
-      renderPhoneSel();renderBar();renderCompare();renderSummary();renderJump();if(!typing){renderMeta();renderStep()}}
+      renderPhoneSel();renderBar();renderCompare();renderSummary();renderJump();demoBtns();if(!typing){renderMeta();renderStep()}}
     setSave("Saved");
   },()=>setSave("Saved on this device (sync paused)"));
 }catch(e){setSave("Saved on this device only")}})();
