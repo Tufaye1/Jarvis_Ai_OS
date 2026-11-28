@@ -1,0 +1,505 @@
+<title>iPhone 17 Pro Buying Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: phone-first. Sticky top bar (which phone + progress). One big step card at a time with Back/Next, a jump list of every step under it, then the comparison of all phones. */
+:root{
+  --bg:#EFEFED; --card:#FFFFFF; --sunk:#F5F5F1; --line:#E2E2DC;
+  --ink:#101010; --ink2:#55554E; --ink3:#8A8A84;
+  --accent:#1F4FD1; --accent-ink:#FFFFFF; --accent-bg:#E8EEFC;
+  --ok:#17803D; --ok-bg:#E3F2E8; --warn:#9A5800; --warn-bg:#FBEFD9; --bad:#C2261B; --bad-bg:#FBE4E1;
+  --f-display:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;
+  --f-body:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121212; --card:#1B1B1A; --sunk:#232321; --line:#30302D;
+  --ink:#F2F2EE; --ink2:#B8B8B0; --ink3:#86867F; --accent:#7C9BFF; --accent-ink:#0B0B0B; --accent-bg:#1C2440;
+  --ok:#5CCB80; --ok-bg:#16301F; --warn:#F0B34F; --warn-bg:#33270F; --bad:#FF7A6E; --bad-bg:#3A1714; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121212; --card:#1B1B1A; --sunk:#232321; --line:#30302D;
+  --ink:#F2F2EE; --ink2:#B8B8B0; --ink3:#86867F; --accent:#7C9BFF; --accent-ink:#0B0B0B; --accent-bg:#1C2440;
+  --ok:#5CCB80; --ok-bg:#16301F; --warn:#F0B34F; --warn-bg:#33270F; --bad:#FF7A6E; --bad-bg:#3A1714; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--card)}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
+p{margin:0}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 96px;display:flex;flex-direction:column;gap:18px}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.bar-in{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px;display:flex;flex-direction:column;gap:6px}
+.bar-row{display:flex;gap:8px;align-items:center;min-width:0}
+.bar select{flex:1;min-width:0}
+.prog{height:6px;background:var(--sunk);border-radius:6px;overflow:hidden}
+.prog>i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+.muted{color:var(--ink2)} .small{font-size:.86rem} .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 .95rem var(--f-body);padding:10px 14px;border-radius:11px;cursor:pointer;min-height:44px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.sm{min-height:36px;padding:6px 10px;font-size:.85rem}
+.btn:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,select,textarea{font:500 1rem var(--f-body);color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:.84rem;color:var(--ink2);font-weight:600;min-width:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+/* step card */
+.step-head{display:flex;flex-direction:column;gap:6px}
+.step-num{font:700 .8rem var(--f-mono);color:var(--accent)}
+.step-title{font-size:1.35rem;line-height:1.25}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.74rem;white-space:nowrap}
+.chip.stop{background:var(--bad-bg);color:var(--bad)} .chip.deduct{background:var(--warn-bg);color:var(--warn)} .chip.info{background:var(--sunk);color:var(--ink2)} .chip.known{background:var(--accent-bg);color:var(--accent)}
+.chip.ok{background:var(--ok-bg);color:var(--ok)} .chip.bad{background:var(--bad-bg);color:var(--bad)} .chip.warn{background:var(--warn-bg);color:var(--warn)}
+ol.do{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px}
+ol.do li{padding-left:2px}
+.res{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.res div{border-radius:12px;padding:10px 12px;font-size:.9rem}
+.res .g{background:var(--ok-bg)} .res .b{background:var(--bad-bg)}
+.res b{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.res .g b{color:var(--ok)} .res .b b{color:var(--bad)}
+.known-box{background:var(--accent-bg);border-radius:12px;padding:10px 12px;font-size:.88rem}
+.known-box b{color:var(--accent)}
+.calc{font-weight:700;font-size:.92rem}
+.calc.ok{color:var(--ok)} .calc.bad{color:var(--bad)} .calc.warn{color:var(--warn)}
+.verdict-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.verdict-btns button{border:2px solid var(--line);background:var(--card);color:var(--ink);font:700 1rem var(--f-body);padding:12px 6px;border-radius:12px;cursor:pointer;min-height:52px}
+.verdict-btns button[data-v="pass"][aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.verdict-btns button[data-v="fail"][aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.verdict-btns button[data-v="skip"][aria-pressed="true"]{background:var(--ink2);border-color:var(--ink2);color:var(--card)}
+.nav{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* jump list */
+.phase{display:flex;flex-direction:column}
+.phase h3{font-size:.95rem;padding:10px 0 6px;display:flex;justify-content:space-between;gap:8px}
+.jl{display:grid;grid-template-columns:2.2em 1fr auto;gap:8px;align-items:center;padding:7px 6px;border-top:1px solid var(--line);cursor:pointer;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;font:inherit;color:inherit;width:100%;border-radius:0}
+.jl:hover{background:var(--sunk)}
+.jl.cur{background:var(--accent-bg)}
+.jl .n{font:600 .78rem var(--f-mono);color:var(--ink3)}
+.jl .t{font-size:.9rem;min-width:0}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.pass{background:var(--ok)} .dot.fail{background:var(--bad)} .dot.skip{background:var(--ink3)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}
+th{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--sunk);border-radius:12px;padding:12px;font:.78rem/1.5 var(--f-mono);margin:0;max-height:300px;overflow:auto}
+.save{font-size:.78rem;color:var(--ink3)}
+.confirm{background:var(--bad-bg);border-radius:12px;padding:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:.9rem}
+a{color:var(--accent)}
+@media (max-width:420px){.res{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.prog>i{transition:none}}
+</style>
+
+<div class="bar"><div class="bar-in">
+  <div class="bar-row">
+    <select id="phoneSel" aria-label="Phone being inspected"></select>
+    <button class="btn sm" id="newPhone" type="button">+ New phone</button>
+  </div>
+  <div class="bar-row"><div class="prog" style="flex:1" aria-label="Progress"><i id="progFill"></i></div><span id="progTxt" class="small mono muted"></span><span id="verdictChip" class="chip info">In progress</span></div>
+</div></div>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="eyebrow">Pre-owned · US model (LL/A) · eSIM only</span>
+    <h1 style="font-size:1.7rem">iPhone 17 Pro / Pro Max buying guide</h1>
+    <p class="muted small">One step at a time. Do what it says, then tap <b>Pass</b>, <b>Fail</b> or <b>Skip</b>. <b style="color:var(--bad)">STOP</b> steps: if one fails, don't buy that phone. Everything saves automatically, and you can switch between phones at the top.</p>
+  </header>
+
+  <section class="card" id="phoneCard">
+    <div class="row" style="justify-content:space-between"><h2 style="font-size:1.1rem">This phone</h2><span id="saveState" class="save"></span></div>
+    <div class="grid2">
+      <label class="f">Shop<input id="pShop" placeholder="Shop name"></label>
+      <label class="f">Price asked<input id="pPrice" inputmode="numeric" placeholder="e.g. 145000"></label>
+      <label class="f">Model<select id="pModel"><option>iPhone 17 Pro</option><option>iPhone 17 Pro Max</option></select></label>
+      <label class="f">Storage<select id="pStorage"><option>256 GB</option><option>512 GB</option><option>1 TB</option><option>2 TB</option></select></label>
+      <label class="f">Colour<select id="pColor"><option>Cosmic Orange</option><option>Deep Blue</option><option>Silver</option></select></label>
+    </div>
+  </section>
+
+  <section class="card" id="stepCard" aria-live="polite"></section>
+
+  <section class="card">
+    <div class="row" style="justify-content:space-between"><h2 style="font-size:1.1rem">All steps</h2><span class="eyebrow">Tap to jump</span></div>
+    <div id="jump"></div>
+  </section>
+
+  <section class="card">
+    <div class="row" style="justify-content:space-between"><h2 style="font-size:1.1rem">Compare phones</h2><span class="eyebrow">Every phone you saved</span></div>
+    <div class="tbl"><table><thead><tr><th>Shop</th><th>Price</th><th>Model</th><th>Health</th><th>Cycles</th><th>Drain</th><th>Fails</th><th>Done</th><th>Result</th></tr></thead><tbody id="cmp"></tbody></table></div>
+    <p class="small muted">Saved to this artifact. Claude can read these results too, so just say "check my phones" in the chat.</p>
+    <div class="row"><button class="btn" id="copyBtn" type="button">Copy summary of this phone</button><button class="btn" id="delBtn" type="button">Delete this phone</button><span id="copyMsg" class="small muted"></span></div>
+    <div id="delConfirm" class="confirm" hidden>Delete this phone and all its answers? <button class="btn sm" id="delYes" type="button">Yes, delete</button><button class="btn sm" id="delNo" type="button">Cancel</button></div>
+    <pre id="summary"></pre>
+  </section>
+
+  <p class="small muted">Sources for "known issue" notes: owner reports on Apple Support Community and MacRumors forums, plus news coverage (9to5Mac, iFixit, Notebookcheck), up to late 2026. These are reports from some owners, not defects in every unit.</p>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ===================== STEPS =====================
+ sev: stop = don't buy if it fails · deduct = problem, lowers value · info = just record
+ input: {k:key,label,type:"num"|"text"|"time"} values saved per step
+ calc: function(values, allResults) -> {cls,txt} live hint
+*/
+const P=[];
+function phase(name,mins,steps){P.push({name,mins,steps})}
+
+phase("Start",2,[
+ {id:"batStart",sev:"info",t:"Write down the battery % and the time",
+  do:["Do NOT plug the phone into a charger. If it's charging, unplug it.","Open Settings › Battery. Turn on Battery Percentage if it's off.","Type the exact % below and tap Record time now."],
+  good:"You have a start % and a start time.",bad:"—",
+  input:[{k:"pct",label:"Battery % now",type:"num"},{k:"time",label:"Time",type:"time"}],
+  note:"At the end (step marked 'Battery at the end') you'll write it again. The difference shows how fast this phone drains during your test."},
+ {id:"model",sev:"stop",t:"Check it is the right model and the US version",
+  do:["Settings › General › About.","Model Name must say iPhone 17 Pro or iPhone 17 Pro Max.","Tap Model Number once. It changes to something like MG8H4LL/A. Type it below."],
+  good:"Ends in LL/A (US). Starts with M (new) or F (Apple refurbished).",bad:"Wrong model name, or starts with N (a replacement unit Apple gave someone for a broken phone).",
+  input:[{k:"mn",label:"Model Number",type:"text"}],calc:v=>modelCalc(v.mn)},
+ {id:"storage",sev:"stop",t:"Storage matches what the shop said",
+  do:["Same screen: Settings › General › About.","Look at Capacity."],good:"Matches the price you're quoted (256 GB / 512 GB / 1 TB / 2 TB).",bad:"Smaller than advertised."},
+ {id:"serial",sev:"stop",t:"Check the serial number on Apple's website",
+  do:["Settings › General › About › Serial Number. Long-press it and copy it.","On YOUR phone, open checkcoverage.apple.com and paste it.","Look at the model name and the dates shown."],
+  good:"Apple shows the same model. Purchase date makes sense.",bad:"\"Serial number not valid\", or a different model. Don't buy.",
+  input:[{k:"sn",label:"Serial number",type:"text"}],link:["Open Apple Check Coverage","https://checkcoverage.apple.com/"]},
+ {id:"imei",sev:"stop",t:"IMEI matches everywhere",
+  do:["Open the Phone app and dial *#06#. A number appears (IMEI).","Compare with Settings › General › About › IMEI.","Compare with the box sticker and the shop's invoice, if they have one."],
+  good:"Same number everywhere. The checker below says Valid.",bad:"Any difference, or the checker says Invalid.",
+  input:[{k:"imei",label:"IMEI (15 digits)",type:"text"}],calc:v=>imeiCalc(v.imei)}
+]);
+
+phase("Locks (most important)",4,[
+ {id:"carrier",sev:"stop",t:"Not locked to a US carrier",
+  do:["Settings › General › About.","Scroll to Carrier Lock."],
+  good:"\"No SIM restrictions\".",bad:"Anything else (e.g. SIM locked). A locked US phone won't work with your SIM. Don't buy.",
+  known:"Many US phones were sold locked to AT&T, Verizon or T-Mobile, or on payment plans. This is the most common trap with US units."},
+ {id:"account",sev:"stop",t:"No one else's Apple account on it",
+  do:["Open Settings. Look at the very top.","If a name is shown, tap it › Find My › Find My iPhone."],
+  good:"Top says \"Sign in to your iPhone\", or Find My iPhone is Off.",bad:"Someone's name with Find My On, and the shop can't sign out. Don't buy."},
+ {id:"mdm",sev:"stop",t:"Not owned by a company",
+  do:["Settings › General.","Look for \"VPN & Device Management\". Open it if it's there."],
+  good:"No management profile listed.",bad:"A profile that says the phone is managed by an organisation. Don't buy."},
+ {id:"tray",sev:"stop",t:"No SIM card slot (US model is eSIM-only)",
+  do:["Look at the left side of the phone, below the volume buttons.","There should be no small slot with a pinhole."],
+  good:"No slot.",bad:"A SIM tray on a phone that says LL/A means parts were swapped, or it's fake."},
+ {id:"esim",sev:"stop",t:"Your mobile operator can give you an eSIM",
+  do:["Ask your operator (or check their website) whether they support eSIM for iPhone.","If the shop can, ask them to put a test eSIM on it and make one call."],
+  good:"Your operator supports eSIM. Better: a test call works.",bad:"Your operator has no eSIM. This phone has no SIM slot, so you'd have no mobile network."},
+ {id:"stolen",sev:"stop",t:"Not reported stolen or blocked",
+  do:["Ask the shop for a proof-of-purchase or import invoice with this IMEI.","If your country has an official IMEI check (government or operator), check the IMEI there."],
+  good:"Paperwork with the same IMEI, or the official check is clean.",bad:"No paperwork and the price is suspiciously low, or the IMEI shows blocked."}
+]);
+
+phase("Body and screen glass",4,[
+ {id:"plateau",sev:"deduct",t:"Camera bump edges: chipped paint",
+  do:["Turn the phone over. Look at the raised camera area (the 'plateau') that runs across the top of the back.","Check its sharp edges and corners under a bright light."],
+  good:"Edges clean, colour even.",bad:"Silver or white chips along the edges. Cosmetic only, but use it to ask for a lower price.",
+  known:"Scratches and chips on the camera plateau edges were widely reported on the 17 Pro (\"scratchgate\"). iFixit found the paint chips easily on those sharp edges."},
+ {id:"corners",sev:"deduct",t:"Corners and frame: no dents or bends",
+  do:["Look at all four corners closely.","Lay the phone flat on the counter, screen up, then screen down. Press each corner lightly."],
+  good:"No dents. Doesn't rock on the table.",bad:"Dents (it was dropped) or it rocks (bent frame)."},
+ {id:"screen",sev:"deduct",t:"Screen glass: no cracks or deep scratches",
+  do:["Turn the screen off.","Tilt it under the shop light so reflections show any marks."],
+  good:"Only tiny hairline marks, if any.",bad:"Cracks, chips at edges, deep scratches you can feel with a fingernail."},
+ {id:"back",sev:"deduct",t:"Back glass: no cracks",
+  do:["Check the glass panel on the back under light, especially around the corners and the MagSafe circle."],
+  good:"No cracks.",bad:"Any crack (expensive repair)."},
+ {id:"lens",sev:"deduct",t:"Camera lens covers: no scratches, no dust inside",
+  do:["Look straight into each of the 3 big rear lenses with light shining on them.","Look for scratches on the glass and for specks or dust inside the lens."],
+  good:"Clear glass, nothing inside.",bad:"Scratched lens glass or dust inside (shows as blurry spots in photos)."},
+ {id:"gap",sev:"deduct",t:"Screen is not lifting from the frame",
+  do:["Run your fingernail all around the edge of the screen.","Look at the phone from the side."],
+  good:"Even, tight gap all around.",bad:"Screen lifts or the gap is uneven. Can mean a swollen battery or a cheap screen repair."},
+ {id:"screws",sev:"deduct",t:"Bottom screws are untouched",
+  do:["Look at the 2 tiny screws on either side of the USB-C port. Use your phone's camera zoom if needed."],
+  good:"Clean, shiny screw heads.",bad:"Scratched or damaged screw heads. The phone has been opened."},
+ {id:"port",sev:"deduct",t:"Charging port is clean and firm",
+  do:["Look inside the USB-C port with a light.","Plug a cable in and wiggle it gently."],
+  good:"Clean, cable sits firmly.",bad:"Dirt or lint inside, or the cable is loose."},
+ {id:"swell",sev:"stop",t:"Battery is not swollen",
+  do:["Press gently on the centre of the back glass, then the centre of the screen."],
+  good:"Solid, no flex.",bad:"Glass moves or bulges. Swollen battery, and a safety risk. Don't buy."}
+]);
+
+phase("Battery and repair history",3,[
+ {id:"health",sev:"deduct",t:"Battery Health and cycle count",
+  do:["Settings › Battery › Battery Health.","Type Maximum Capacity and Cycle Count below."],
+  good:"95% or more, and under about 300 cycles.",bad:"Under 90%, or a message saying Service or Unknown Part.",
+  input:[{k:"cap",label:"Maximum Capacity %",type:"num"},{k:"cyc",label:"Cycle Count",type:"num"}],calc:v=>healthCalc(v.cap,v.cyc),
+  known:"Owner reports and long-term tests show about 1% lost per 50 cycles in the first year (a forum rule of thumb, not an Apple number). One 12-month test of a 17 Pro Max read 97% at 277 cycles. Apple rates these batteries to keep about 80% after 1,000 full cycles."},
+ {id:"batDates",sev:"info",t:"Battery manufacture date and first use",
+  do:["Same screen: Settings › Battery › Battery Health.","Look for Manufacture Date and First Use. Type First Use below."],
+  good:"First Use date fits the shop's story.",bad:"First Use is much older than the shop claims, so they're not being straight with you.",
+  input:[{k:"first",label:"First Use (month/year)",type:"text"}]},
+ {id:"parts",sev:"stop",t:"No unknown (fake) parts",
+  do:["Settings › General › About.","Scroll down. If you see \"Parts and Service History\", tap it."],
+  good:"That section doesn't exist (never repaired). Or it lists \"Genuine Apple Part\" (repaired properly, worth a bit less).",bad:"\"Unknown Part\" for screen, battery or camera. Don't buy."},
+ {id:"panic",sev:"deduct",t:"No repeated crash reports",
+  do:["Settings › Privacy & Security › Analytics & Improvements › Analytics Data.","Scroll the list. Look for names starting with \"panic-full\"."],
+  good:"None, or one.",bad:"Several panic-full files: the phone has been crashing and restarting, often a hardware fault.",
+  input:[{k:"n",label:"How many panic-full files?",type:"num"}]},
+ {id:"ios",sev:"info",t:"Software is up to date",
+  do:["Settings › General › Software Update."],good:"Says iOS is up to date, or an update is available and downloads normally.",bad:"The page fails to load or looks strange."}
+]);
+
+phase("Display",4,[
+ {id:"black",sev:"deduct",t:"Dead pixels on black",
+  do:["Turn brightness to full (Control Center slider all the way up).","Open Camera and cover the lens with your finger. The screen goes black.","Look closely for any tiny bright dot."],
+  good:"Pure black everywhere.",bad:"Coloured or white dots that stay in one place."},
+ {id:"white",sev:"deduct",t:"Even colour on white",
+  do:["Open Notes and make a new note (light mode, full brightness).","Look for yellow or pink patches, lines, or darker corners."],
+  good:"Even white everywhere.",bad:"Tinted patches, lines, or shadowy areas."},
+ {id:"grey",sev:"deduct",t:"No burn-in (ghost images)",
+  do:["Take a photo of a plain grey or light-coloured wall.","Open it full screen and look for faint shapes such as the keyboard, status bar or icons."],
+  good:"Plain, even image.",bad:"Faint ghost shapes that stay on screen."},
+ {id:"touch",sev:"deduct",t:"Touch works everywhere",
+  do:["Press and hold an empty spot on the Home Screen until icons wiggle.","Drag one app icon slowly into all 4 corners and along every edge."],
+  good:"The icon follows your finger the whole way.",bad:"It drops or jumps in some area (dead zone), or the screen taps by itself."},
+ {id:"truetone",sev:"stop",t:"True Tone option exists (screen not replaced cheaply)",
+  do:["Open Control Center (swipe down from top-right).","Press and hold the brightness slider.","You should see a True Tone button."],
+  good:"True Tone button is there and works.",bad:"No True Tone button. Often a sign of a non-original screen."},
+ {id:"autob",sev:"deduct",t:"Auto-brightness reacts",
+  do:["Settings › Accessibility › Display & Text Size › Auto-Brightness On.","Cover the top of the screen with your hand for 5 seconds."],
+  good:"Screen dims, then brightens when you uncover it.",bad:"Nothing happens."},
+ {id:"promo",sev:"deduct",t:"Smooth 120 Hz scrolling",
+  do:["Scroll quickly in Settings. It should look very smooth.","Settings › Accessibility › Motion: there should be a \"Limit Frame Rate\" switch (leave it off)."],
+  good:"Smooth, and the Limit Frame Rate switch exists.",bad:"Choppy scrolling, or the option is missing."},
+ {id:"aod",sev:"deduct",t:"Always-On display",
+  do:["Lock the phone with the side button.","Watch the screen for a few seconds."],good:"A dim clock and wallpaper stay on.",bad:"Screen goes fully black (check Settings › Display & Brightness › Always On Display is enabled first)."},
+ {id:"island",sev:"deduct",t:"Dynamic Island animates",
+  do:["Open Clock › Timer, start a 1-minute timer, go to the Home Screen."],good:"The black pill at the top shows the timer and you can tap it.",bad:"Nothing shows, or the area looks odd."}
+]);
+
+phase("Buttons",2,[
+ {id:"vol",sev:"deduct",t:"Volume up and volume down",do:["Press each one several times."],good:"Clear click, volume changes.",bad:"Mushy, stuck, or no response."},
+ {id:"side",sev:"deduct",t:"Side (power) button",do:["Press once to lock, again to wake.","Hold it for 2 seconds: Siri should appear."],good:"Works every time.",bad:"Needs a hard press or misses presses."},
+ {id:"action",sev:"deduct",t:"Action button (top-left)",
+  do:["Settings › Action Button. Swipe to Flashlight.","Press and hold the Action button. The flashlight turns on."],good:"It works with a crisp vibration.",bad:"No response."},
+ {id:"cc",sev:"deduct",t:"Camera Control button (lower right side)",
+  do:["Click it once: Camera opens.","Lightly press it (don't click): a slider appears.","Slide your finger along it: zoom changes."],
+  good:"Click, light press and slide all work.",bad:"Any of the three doesn't respond."}
+]);
+
+phase("Cameras",6,[
+ {id:"c05",sev:"deduct",t:"0.5× ultra wide",do:["Open Camera. Tap 0.5×.","Take a photo of something with fine detail (text, a shelf)."],good:"Sharp photo, no dark corners.",bad:"Blurry, dark corners, or black screen."},
+ {id:"c1",sev:"deduct",t:"1× and 2× main camera",do:["Tap 1×, then 2×. Take a photo each.","Tap the screen on something close, then something far away."],good:"Focuses fast and sharp both times.",bad:"Hunts for focus, blurry, or shaking image."},
+ {id:"c4",sev:"deduct",t:"4× and 8× telephoto",do:["Tap 4×, then 8×. Take a photo of something across the shop."],good:"Sharp, steady image.",bad:"Blurry, shaking, or it refuses to switch."},
+ {id:"macro",sev:"deduct",t:"Macro (very close)",do:["At 1×, move the phone 3 cm from small text.","It should switch to macro automatically (a flower icon may appear)."],good:"Text is sharp up close.",bad:"Stays blurry."},
+ {id:"front",sev:"deduct",t:"Front (selfie) camera",do:["Switch to the front camera. Take a photo and a Portrait photo."],good:"Sharp, background blurs in Portrait.",bad:"Blurry, dark, or Portrait doesn't work."},
+ {id:"spot",sev:"deduct",t:"No spot or dot that stays in every photo",
+  do:["Take 3 photos of a plain bright wall or the sky, with each lens (0.5×, 1×, 4×) and in Portrait mode.","Zoom into the photos. Look for a dot, smudge or dark spot that sits in the same place every time."],
+  good:"Clean images.",bad:"Same dot in every photo from one lens: dust or a sensor defect.",
+  known:"You mentioned the 15 Pro Max Portrait dot. For the 17 Pro, owners mostly report flare and reflections (next step), not a fixed dot, so a fixed dot here means a fault in this unit."},
+ {id:"flare",sev:"info",t:"Reflection (flare) test",
+  do:["Point the camera at a bright light (a ceiling lamp) with a darker background.","Take a photo at 1× and 4×."],
+  good:"Small green or white ghost dots near bright lights are normal on all iPhones.",bad:"Large streaks or bands across the image, or the same on every lens even away from lights.",
+  known:"Lens flare and light-band reflections on the 17 Pro telephoto were reported, some linked to iOS image processing. It's a design trait on many iPhones, so it doesn't mean this unit is faulty."},
+ {id:"switch",sev:"deduct",t:"Camera doesn't freeze when switching lenses",
+  do:["In Camera, tap 0.5× › 1× › 2× › 4× › 8× quickly, back and forth, 10 times.","Switch Photo › Video › Portrait a few times."],
+  good:"Never freezes or goes black.",bad:"Black screen or frozen camera.",known:"Some owners reported the camera freezing on a black screen until a restart."},
+ {id:"video",sev:"deduct",t:"4K video with sound, stable",
+  do:["Switch to Video. Record 15 seconds while walking and talking.","Play it back with sound."],good:"Smooth, steady, clear voice.",bad:"Jittery picture, clicking or buzzing noise, no sound."},
+ {id:"flash",sev:"deduct",t:"Flash and flashlight",do:["Open Control Center, tap the flashlight, then press and hold it and try the brightness levels.","In Camera, set Flash to On and take a photo."],good:"Light works at all levels, and the flash fires.",bad:"No light or very weak."},
+ {id:"lidar",sev:"deduct",t:"LiDAR depth sensor",do:["Open the Measure app.","Point it at a person standing up. Their height should appear."],good:"Shows a height within a few cm.",bad:"Can't measure or wildly wrong."}
+]);
+
+phase("Sound, mic and earphones",5,[
+ {id:"spk",sev:"deduct",t:"Both speakers work (stereo)",
+  do:["Play music or a video at full volume.","Cover the bottom speaker with a finger: sound still comes from the top earpiece.","Cover the top: sound still comes from the bottom."],
+  good:"Both play clearly, no crackling.",bad:"One side silent, or crackling or distorted."},
+ {id:"hiss",sev:"deduct",t:"Speaker hiss while charging",
+  do:["Plug the phone into a charger.","Find a quiet corner. Set volume low and play nothing.","Hold the bottom speaker against your ear for 10 seconds."],
+  good:"Silent.",bad:"Static or hissing from the speaker.",
+  known:"Many 17 Pro and Pro Max owners reported a hiss from the bottom speaker while charging, even on Apple chargers. Replacements didn't always fix it. If you hear it, decide whether it bothers you."},
+ {id:"earpiece",sev:"deduct",t:"Call earpiece",do:["Call someone. Hold the phone to your ear normally."],good:"You hear them clearly.",bad:"Quiet, muffled or crackling."},
+ {id:"mic",sev:"deduct",t:"Microphones",
+  do:["Ask the person on the call if they hear you clearly.","Turn on speakerphone and ask again.","Open Voice Memos, record 5 seconds, play it back."],
+  good:"They hear you clearly both ways, and the recording is clear.",bad:"They can't hear you, or the recording is muffled."},
+ {id:"buds",sev:"deduct",t:"Earphones",
+  do:["Connect AirPods or any Bluetooth earphones, or wired USB-C earphones.","Play music, then make a short call with them."],
+  good:"Music and call audio work in the earphones.",bad:"Won't connect, or audio cuts out."},
+ {id:"vib",sev:"deduct",t:"Vibration",do:["Flip Silent Mode on and off with the Action button (or Control Center)."],good:"Crisp, solid tap.",bad:"Rattling buzz, or nothing."}
+]);
+
+phase("Face ID, sensors and wireless",5,[
+ {id:"faceid",sev:"stop",t:"Face ID sets up and unlocks",
+  do:["Settings › Face ID & Passcode › Set Up Face ID (or Reset, then set up).","Lock and unlock 3 times."],
+  good:"Sets up and unlocks quickly.",bad:"\"Face ID is not available\" or it won't scan. Expensive repair, so don't buy."},
+ {id:"prox",sev:"deduct",t:"Screen turns off near your ear",do:["During a call, cover the top of the screen with your hand."],good:"Screen goes dark, then comes back when you uncover it.",bad:"Screen stays on. Often a sign of a bad screen repair."},
+ {id:"wifi",sev:"deduct",t:"Wi-Fi",do:["Join the shop Wi-Fi or your hotspot.","Open a website."],good:"Connects and loads.",bad:"Wi-Fi switch greyed out, or keeps dropping.",known:"Some early owners reported Wi-Fi and cellular drops, mostly fixed by iOS updates."},
+ {id:"bt",sev:"deduct",t:"Bluetooth",do:["Settings › Bluetooth. Check that nearby devices appear."],good:"Devices appear and pair.",bad:"Bluetooth switch spins or stays off."},
+ {id:"gps",sev:"deduct",t:"GPS and compass",do:["Open Maps. Tap the location arrow.","Turn around. The blue beam should turn with you."],good:"Correct location, beam follows you.",bad:"Wrong place, or the beam doesn't move."},
+ {id:"level",sev:"deduct",t:"Motion sensors (level)",do:["Open the Measure app › Level.","Put the phone flat on the counter."],good:"Shows 0° on a flat counter.",bad:"Shows a big angle on a flat surface."},
+ {id:"charge",sev:"deduct",t:"Charging (cable and MagSafe)",do:["Plug in a USB-C charger. A charging sound or vibration and a lightning bolt should appear.","If the shop has a MagSafe charger, try it too."],good:"Charges both ways.",bad:"Doesn't charge, or only at certain cable angles."},
+ {id:"heat",sev:"deduct",t:"Doesn't get too hot",do:["After all the camera tests, hold the phone in your hand for 30 seconds."],good:"Warm is fine.",bad:"Too hot to hold comfortably.",known:"Some Pro Max owners reported heat after iOS updates. A very hot phone during light testing is a warning sign."}
+]);
+
+phase("Finish and pay",5,[
+ {id:"batEnd",sev:"info",t:"Battery at the end",
+  do:["Unplug the phone if it's charging. If it was charging during the tests, say so in the box below.","Settings › Battery. Type the % and tap Record time now."],
+  good:"The tool calculates drain per hour from your start reading.",bad:"—",
+  input:[{k:"pct",label:"Battery % now",type:"num"},{k:"time",label:"Time",type:"time"},{k:"charged",label:"Was it charged during tests? (yes/no)",type:"text"}],calc:(v)=>drainCalc(v)},
+ {id:"erase",sev:"stop",t:"Erase it and set it up yourself",
+  do:["Ask the shop to erase it: Settings › General › Transfer or Reset iPhone › Erase All Content and Settings.","Set it up yourself and connect to Wi-Fi.","Watch every screen."],
+  good:"You reach the Home Screen without any \"iPhone Locked to Owner\" or \"Remote Management\" screen.",bad:"Either of those screens. Don't buy, and don't pay."},
+ {id:"invoice",sev:"deduct",t:"Get a proper invoice",
+  do:["Ask for a written invoice with the shop name, IMEI, model, price, date and return or warranty days.","Take a photo of it."],good:"Invoice with the IMEI on it.",bad:"Shop refuses any paperwork.",input:[{k:"terms",label:"Return / warranty terms",type:"text"}]},
+ {id:"dead",sev:"info",t:"Remember this tip after buying",
+  do:["Don't let the battery run all the way to 0%.","If it ever won't turn on after dying: press Volume Up, then Volume Down, then hold the Side button until the Apple logo appears. Or put it on a wireless charger for a while."],
+  good:"You know the fix.",bad:"—",known:"Owners of 17-series phones reported that some phones won't turn on after the battery fully drains. A force restart or wireless charger usually brings them back."}
+]);
+
+const STEPS=P.flatMap((ph,pi)=>ph.steps.map(s=>({...s,phase:pi})));
+STEPS.forEach((s,i)=>s.n=i+1);
+const SCORED=STEPS.filter(s=>s.sev!=="info");
+
+/* ===================== CALCS ===================== */
+function luhn(d){if(!/^\d{15}$/.test(d))return false;let t=0;for(let i=0;i<15;i++){let n=+d[14-i];if(i%2){n*=2;if(n>9)n-=9}t+=n}return t%10===0}
+function imeiCalc(x){const d=String(x||"").replace(/\D/g,"");if(!d)return null;if(d.length!==15)return{cls:"bad",txt:d.length+" digits. An IMEI has 15."};return luhn(d)?{cls:"ok",txt:"Valid IMEI format. Now make sure it matches the box and invoice."}:{cls:"bad",txt:"Invalid. Check for a typo. If it's typed correctly, this number is fake."}}
+function modelCalc(x){const m=String(x||"").toUpperCase().replace(/\s/g,"");if(!m)return null;
+  if(/^A\d{4}$/.test(m))return{cls:"warn",txt:"That's the A-number. Tap Model Number again to see the one ending in /A."};
+  const p={M:"new retail unit",F:"Apple refurbished",N:"replacement unit (Apple gave it for a broken phone)",P:"engraved retail unit"}[m[0]];
+  const us=m.endsWith("LL/A");
+  if(!p)return{cls:"bad",txt:"Unusual. Model numbers normally start with M, F, N or P."};
+  return{cls:(us&&(m[0]==="M"||m[0]==="P"||m[0]==="F"))?"ok":"warn",txt:(us?"US version (LL/A). ":"NOT a US version (doesn't end in LL/A). ")+"Unit type: "+p+"."}}
+function healthCalc(cap,cyc){cap=parseFloat(cap);cyc=parseFloat(cyc);if(isNaN(cap))return null;
+  let cls=cap>=95?"ok":cap>=90?"warn":"bad";let txt=cap+"% health. ";
+  if(!isNaN(cyc)){const expected=100-cyc/50;txt+=cyc+" cycles, so roughly "+Math.round(Math.min(100,expected))+"% would be typical. ";
+    if(cap<expected-3){cls=cls==="ok"?"warn":cls;txt+="Lower than typical for these cycles. The battery may have been heat-stressed.";}
+    else txt+="In line with normal wear.";}
+  else txt+=cls==="ok"?"Good.":cls==="warn"?"OK but worn. Negotiate.":"Worn. Needs a battery soon.";
+  return{cls,txt}}
+function mins(t){if(!t)return NaN;const [h,m]=String(t).split(":").map(Number);return h*60+m}
+function drainCalc(v){const st=(cur&&cur.r.batStart&&cur.r.batStart.v)||{};const a=parseFloat(st.pct),b=parseFloat(v.pct);
+  if(isNaN(a)||isNaN(b)||!st.time||!v.time)return{cls:"warn",txt:"Need both start and end % and times (step 1 and this step)."};
+  let dm=mins(v.time)-mins(st.time);if(dm<0)dm+=1440;if(dm<5)return{cls:"warn",txt:"Less than 5 minutes apart. Not enough to judge."};if(dm>240)return{cls:"warn",txt:"Start and end are "+Math.round(dm/60)+" hours apart. Check the two times."};
+  if(/^y/i.test(v.charged||""))return{cls:"warn",txt:"It was charged during the tests, so drain can't be judged. Record that and rely on Battery Health."};
+  const drop=a-b,ph=drop/dm*60;const cls=ph<=30?"ok":ph<=40?"warn":"bad";
+  return{cls,txt:"Dropped "+drop+"% in "+dm+" min, about "+ph.toFixed(1)+"% per hour of heavy testing. "+(cls==="ok"?"Normal for camera, max brightness and calls.":cls==="warn"?"On the high side. Compare with other phones you test.":"High. Compare with the other phones before deciding.")+" (Rough guide. Share the numbers with Claude.)"}}
+
+/* ===================== STATE + STORAGE ===================== */
+let phones={}, curId=null, cur=null, db=null, col=null, idx=0;
+const LS="ipg17:v1";
+function lsLoad(){try{return JSON.parse(localStorage.getItem(LS)||"{}")}catch(e){return{}}}
+function lsSave(){try{localStorage.setItem(LS,JSON.stringify(phones))}catch(e){}}
+function newPhone(){const id="p"+Date.now().toString(36);return{id,shop:"",price:"",model:"iPhone 17 Pro",storage:"256 GB",color:"Cosmic Orange",r:{},step:0,created:new Date().toISOString(),updated:new Date().toISOString()}}
+
+/* one write at a time per doc, debounced */
+const pending={}, inflight={};
+function queueSave(p){p.updated=new Date().toISOString();phones[p.id]=p;lsSave();setSave("Saving…");
+  clearTimeout(pending[p.id]);pending[p.id]=setTimeout(()=>flush(p.id),900)}
+async function flush(id){if(!col){setSave("Saved on this device");return}
+  if(inflight[id]){pending[id]=setTimeout(()=>flush(id),400);return}
+  inflight[id]=true;try{await col.doc(id).set(JSON.parse(JSON.stringify(phones[id])));setSave("Saved")}catch(e){setSave("Couldn't sync. Kept on this device.")}finally{inflight[id]=false}}
+function setSave(t){$("saveState").textContent=t}
+
+/* ===================== RENDER ===================== */
+function stepState(s){return cur.r[s.id]?.s}
+function render(){renderPhoneSel();renderMeta();renderStep();renderJump();renderBar();renderCompare();renderSummary()}
+function renderPhoneSel(){const list=Object.values(phones).sort((a,b)=>a.created<b.created?-1:1);
+  $("phoneSel").innerHTML=list.map((p,i)=>'<option value="'+esc(p.id)+'"'+(p.id===curId?" selected":"")+'>Phone '+(i+1)+': '+esc(p.shop||"(no shop yet)")+(p.price?" · "+esc(p.price):"")+'</option>').join("")}
+function renderMeta(){$("pShop").value=cur.shop||"";$("pPrice").value=cur.price||"";$("pModel").value=cur.model;$("pStorage").value=cur.storage;$("pColor").value=cur.color}
+function sevChip(s){return s==="stop"?'<span class="chip stop">STOP if it fails</span>':s==="deduct"?'<span class="chip deduct">Lowers value</span>':'<span class="chip info">Record</span>'}
+function renderStep(){
+  const s=STEPS[idx];const r=cur.r[s.id]||{};const v=r.v||{};const ph=P[s.phase];
+  const inputs=(s.input||[]).map(f=>{const val=v[f.k]??"";
+    if(f.type==="time")return '<label class="f">'+esc(f.label)+'<div class="row" style="flex-wrap:nowrap"><input data-k="'+f.k+'" type="time" value="'+esc(val)+'"><button class="btn sm" type="button" data-now="'+f.k+'">Record time now</button></div></label>';
+    return '<label class="f">'+esc(f.label)+'<input data-k="'+f.k+'" '+(f.type==="num"?'inputmode="decimal"':'autocapitalize="characters"')+' value="'+esc(val)+'"></label>'}).join("");
+  const c=s.calc?s.calc(v):null;
+  $("stepCard").innerHTML=
+   '<div class="step-head"><span class="step-num">STEP '+s.n+' OF '+STEPS.length+' · '+esc(ph.name.toUpperCase())+'</span><h2 class="step-title">'+esc(s.t)+'</h2><div class="chips">'+sevChip(s.sev)+(s.known?'<span class="chip known">Known 17 Pro issue</span>':'')+'</div></div>'+
+   '<ol class="do">'+s.do.map(d=>'<li>'+esc(d)+'</li>').join("")+'</ol>'+
+   (s.link?'<div><a class="btn" href="'+s.link[1]+'" target="_blank" rel="noopener">'+esc(s.link[0])+' ↗</a></div>':'')+
+   (inputs?'<div class="grid2">'+inputs+'</div>':'')+
+   '<div id="calcOut" class="calc '+(c?c.cls:"")+'">'+(c?esc(c.txt):"")+'</div>'+
+   (s.bad==="—"?'':'<div class="res"><div class="g"><b>Good</b>'+esc(s.good)+'</div><div class="b"><b>Bad</b>'+esc(s.bad)+'</div></div>')+
+   (s.known?'<div class="known-box"><b>What owners report:</b> '+esc(s.known)+'</div>':'')+
+   (s.note?'<p class="small muted">'+esc(s.note)+'</p>':'')+
+   '<div class="verdict-btns" role="group" aria-label="Result">'+["pass","fail","skip"].map(x=>'<button type="button" data-v="'+x+'" aria-pressed="'+(r.s===x)+'">'+({pass:"✓ Pass",fail:"✕ Fail",skip:"Skip"}[x])+'</button>').join("")+'</div>'+
+   '<label class="f">Note (optional)<input data-note="1" value="'+esc(r.note||"")+'" placeholder="Anything you noticed"></label>'+
+   '<div class="nav"><button class="btn" type="button" id="prevBtn"'+(idx===0?" disabled":"")+'>← Back</button><button class="btn primary" type="button" id="nextBtn">'+(idx===STEPS.length-1?"Done":"Next →")+'</button></div>';
+}
+function renderJump(){
+  $("jump").innerHTML=P.map((ph,pi)=>{const st=STEPS.filter(s=>s.phase===pi);const done=st.filter(s=>stepState(s)).length;
+    return '<div class="phase"><h3><span>'+esc(ph.name)+'</span><span class="eyebrow">'+done+'/'+st.length+' · ~'+ph.mins+' min</span></h3>'+
+     st.map(s=>'<button type="button" class="jl'+(s.n-1===idx?" cur":"")+'" data-go="'+(s.n-1)+'"><span class="n">'+s.n+'</span><span class="t">'+esc(s.t)+(s.sev==="stop"?' <span class="chip stop" style="font-size:.62rem">STOP</span>':'')+'</span><span class="dot '+(stepState(s)||"")+'"></span></button>').join("")+'</div>'}).join("")}
+function verdictOf(p){const f=SCORED.filter(s=>p.r[s.id]?.s==="fail");const stop=f.filter(s=>s.sev==="stop");const done=STEPS.filter(s=>p.r[s.id]?.s).length;
+  if(stop.length)return{cls:"bad",txt:"Don't buy",stop,f,done};
+  if(done===0)return{cls:"info",txt:"Not started",stop,f,done};
+  if(f.length)return{cls:"warn",txt:f.length+" issue"+(f.length>1?"s":""),stop,f,done};
+  if(done<STEPS.length)return{cls:"info",txt:"So far so good",stop,f,done};
+  return{cls:"ok",txt:"Passed",stop,f,done}}
+function renderBar(){const v=verdictOf(cur);$("progFill").style.width=(v.done/STEPS.length*100)+"%";$("progTxt").textContent=v.done+"/"+STEPS.length;$("verdictChip").className="chip "+v.cls;$("verdictChip").textContent=v.txt}
+function val(p,id,k){return p.r[id]?.v?.[k]}
+function drainOf(p){const a=parseFloat(val(p,"batStart","pct")),b=parseFloat(val(p,"batEnd","pct"));let dm=mins(val(p,"batEnd","time"))-mins(val(p,"batStart","time"));if(dm<0)dm+=1440;if(isNaN(a)||isNaN(b)||!(dm>=5))return"–";return((a-b)/dm*60).toFixed(1)+"%/h"}
+function renderCompare(){const list=Object.values(phones).sort((a,b)=>a.created<b.created?-1:1);
+  $("cmp").innerHTML=list.map(p=>{const v=verdictOf(p);return '<tr'+(p.id===curId?' style="background:var(--accent-bg)"':'')+'><td>'+esc(p.shop||"–")+'</td><td class="mono">'+esc(p.price||"–")+'</td><td>'+esc(p.model.replace("iPhone ",""))+'</td><td class="mono">'+esc(val(p,"health","cap")||"–")+(val(p,"health","cap")?"%":"")+'</td><td class="mono">'+esc(val(p,"health","cyc")||"–")+'</td><td class="mono">'+drainOf(p)+'</td><td class="mono">'+v.f.length+'</td><td class="mono">'+v.done+'/'+STEPS.length+'</td><td><span class="chip '+v.cls+'">'+esc(v.txt)+'</span></td></tr>'}).join("")}
+function summaryText(p){const v=verdictOf(p);const L=[];
+  L.push("iPHONE CHECK: "+(p.shop||"(shop?)")+" | "+p.model+" "+p.storage+" "+p.color+" | price "+(p.price||"?"));
+  L.push("Result: "+v.txt+" ("+v.done+"/"+STEPS.length+" steps done)");
+  L.push("Battery: start "+(val(p,"batStart","pct")??"?")+"% at "+(val(p,"batStart","time")||"?")+", end "+(val(p,"batEnd","pct")??"?")+"% at "+(val(p,"batEnd","time")||"?")+", drain "+drainOf(p)+(val(p,"batEnd","charged")?" (charged during tests: "+val(p,"batEnd","charged")+")":""));
+  L.push("Health "+(val(p,"health","cap")??"?")+"%, cycles "+(val(p,"health","cyc")??"?")+", first use "+(val(p,"batDates","first")||"?"));
+  L.push("Model no. "+(val(p,"model","mn")||"?")+", serial "+(val(p,"serial","sn")||"?")+", IMEI "+(val(p,"imei","imei")||"?"));
+  if(v.stop.length)L.push("STOP fails: "+v.stop.map(s=>s.t).join("; "));
+  const minor=v.f.filter(s=>s.sev!=="stop");if(minor.length)L.push("Other fails: "+minor.map(s=>s.t).join("; "));
+  const notes=STEPS.filter(s=>p.r[s.id]?.note).map(s=>s.n+". "+s.t+": "+p.r[s.id].note);if(notes.length)L.push("Notes: "+notes.join(" | "));
+  const open=STEPS.filter(s=>!p.r[s.id]?.s);if(open.length)L.push("Not done: "+open.map(s=>s.n).join(", "));
+  return L.join("\n")}
+function renderSummary(){$("summary").textContent=summaryText(cur)}
+
+/* ===================== EVENTS ===================== */
+function ensure(id){cur.r[id]=cur.r[id]||{};cur.r[id].v=cur.r[id].v||{};return cur.r[id]}
+$("stepCard").addEventListener("input",e=>{const s=STEPS[idx];const t=e.target;
+  if(t.dataset.k){ensure(s.id).v[t.dataset.k]=t.value;const c=s.calc?s.calc(cur.r[s.id].v):null;const o=$("calcOut");o.className="calc "+(c?c.cls:"");o.textContent=c?c.txt:""}
+  else if(t.dataset.note){ensure(s.id).note=t.value}
+  queueSave(cur);renderCompare();renderSummary()});
+$("stepCard").addEventListener("click",e=>{const s=STEPS[idx];const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.now){const d=new Date();const t=String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");ensure(s.id).v[b.dataset.now]=t;const inp=$("stepCard").querySelector('input[data-k="'+b.dataset.now+'"]');if(inp)inp.value=t;const c=s.calc?s.calc(cur.r[s.id].v):null;const o=$("calcOut");o.className="calc "+(c?c.cls:"");o.textContent=c?c.txt:"";queueSave(cur);renderSummary();return}
+  if(b.dataset.v){const r=ensure(s.id);r.s=r.s===b.dataset.v?undefined:b.dataset.v;queueSave(cur);
+    b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(r.s===x.dataset.v)));renderJump();renderBar();renderCompare();renderSummary();return}
+  if(b.id==="prevBtn"&&idx>0){go(idx-1)}
+  if(b.id==="nextBtn"){if(idx<STEPS.length-1)go(idx+1);else $("cmp").scrollIntoView({behavior:"smooth"})}});
+function go(i){idx=i;cur.step=i;queueSave(cur);renderStep();renderJump();$("stepCard").scrollIntoView({behavior:"smooth",block:"start"})}
+$("jump").addEventListener("click",e=>{const b=e.target.closest("[data-go]");if(b)go(+b.dataset.go)});
+[["pShop","shop"],["pPrice","price"],["pModel","model"],["pStorage","storage"],["pColor","color"]].forEach(([id,k])=>$(id).addEventListener("input",()=>{cur[k]=$(id).value;queueSave(cur);renderPhoneSel();renderCompare();renderSummary()}));
+$("phoneSel").addEventListener("change",()=>select($("phoneSel").value));
+$("newPhone").addEventListener("click",()=>{const p=newPhone();phones[p.id]=p;select(p.id);queueSave(p);window.scrollTo({top:0,behavior:"smooth"});$("pShop").focus()});
+$("copyBtn").addEventListener("click",()=>{const t=summaryText(cur);const fb=()=>{const r=document.createRange();r.selectNodeContents($("summary"));const s=getSelection();s.removeAllRanges();s.addRange(r);$("copyMsg").textContent="Copy blocked. Text is selected, copy it manually."};
+  try{navigator.clipboard.writeText(t).then(()=>$("copyMsg").textContent="Copied.",fb)}catch(e){fb()}});
+$("delBtn").addEventListener("click",()=>$("delConfirm").hidden=false);
+$("delNo").addEventListener("click",()=>$("delConfirm").hidden=true);
+$("delYes").addEventListener("click",async()=>{const id=curId;delete phones[id];lsSave();$("delConfirm").hidden=true;
+  if(col){try{await col.doc(id).delete()}catch(e){}}
+  const rest=Object.keys(phones);if(!rest.length){const p=newPhone();phones[p.id]=p;queueSave(p)}select(Object.keys(phones)[0])});
+function select(id){curId=id;cur=phones[id];idx=Math.min(cur.step||0,STEPS.length-1);try{localStorage.setItem(LS+":cur",id)}catch(e){}render()}
+
+/* ===================== BOOT ===================== */
+phones=lsLoad();
+if(!Object.keys(phones).length){const p=newPhone();phones[p.id]=p}
+let last=null;try{last=localStorage.getItem(LS+":cur")}catch(e){}
+select(phones[last]?last:Object.keys(phones)[0]);setSave("Saved on this device");
+
+(async()=>{try{
+  db=window.claude&&window.claude.use?await window.claude.use("db"):null;
+  if(!db){setSave("Saved on this device only");return}
+  col=db.collection("inspections");
+  let first=true;
+  col.onSnapshot(snap=>{let changed=false;
+    snap.docs.forEach(d=>{const x=d.data();if(!x||!x.id)return;const mine=phones[x.id];
+      if(!mine||(x.updated||"")>(mine.updated||"")){phones[x.id]=JSON.parse(JSON.stringify(x));changed=true}});
+    if(first){first=false;Object.values(phones).forEach(p=>{if(!snap.docs.some(d=>d.id===p.id)&&Object.keys(p.r).length+(p.shop?1:0)>0)flush(p.id)})}
+    lsSave();
+    if(changed){const keepIdx=idx;cur=phones[curId]||Object.values(phones)[0];curId=cur.id;idx=keepIdx;
+      const ae=document.activeElement;const typing=ae&&$("stepCard").contains(ae)&&ae.tagName==="INPUT";
+      renderPhoneSel();renderBar();renderCompare();renderSummary();renderJump();if(!typing){renderMeta();renderStep()}}
+    setSave("Saved");
+  },()=>setSave("Saved on this device (sync paused)"));
+}catch(e){setSave("Saved on this device only")}})();
+})();
+</script>
